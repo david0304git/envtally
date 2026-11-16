@@ -93,7 +93,12 @@ pub fn check() -> Updates {
 fn brew() -> EcoCheck {
     let mut check = EcoCheck::new("brew");
     if !sh::exists("brew") {
-        check.warnings.push(String::from("找不到 brew，跳過 Homebrew 版本檢查"));
+        // Windows 沒有 Homebrew，這不算問題
+        if cfg!(target_os = "macos") {
+            check
+                .warnings
+                .push(String::from("找不到 brew，跳過 Homebrew 版本檢查"));
+        }
         return check;
     }
 

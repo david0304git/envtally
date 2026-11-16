@@ -28,10 +28,12 @@ pub fn scan() -> Result<Part, String> {
     let mut part = Part::new();
     let mut found_anything = false;
 
-    let nvm_root = format!(
-        "{}/.nvm/versions/node",
-        std::env::var("HOME").unwrap_or_else(|_| String::from("/"))
-    );
+    // macOS/Linux：~/.nvm/versions/node；Windows：%APPDATA%\nvm\v24.12.0
+    let nvm_root = if cfg!(windows) {
+        format!("{}\\nvm", std::env::var("APPDATA").unwrap_or_default())
+    } else {
+        format!("{}/.nvm/versions/node", sh::home())
+    };
     let active_node = sh::which("node")
         .and_then(|p| std::fs::canonicalize(p).ok())
         .map(|p| p.display().to_string());
@@ -58,7 +60,11 @@ pub fn scan() -> Result<Part, String> {
     for (_, dir_name, path) in versions {
         found_anything = true;
         let version = dir_name.trim_start_matches('v').to_string();
-        let bin = path.join("bin").join("node").display().to_string();
+        let bin = if cfg!(windows) {
+            path.join("node.exe").display().to_string()
+        } else {
+            path.join("bin").join("node").display().to_string()
+        };
         let is_active = active_node
             .as_ref()
             .map(|active| active == &bin || active.starts_with(&path.display().to_string()))

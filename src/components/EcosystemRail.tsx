@@ -109,7 +109,7 @@ export default function EcosystemRail({ ecosystems, counts, scope, total, onSele
         type="button"
         className={`rail-item ${scope === ALL_SCOPE ? "is-active" : ""}`}
         onClick={() => onSelect(ALL_SCOPE)}
-        title={t("shortcut.allScope")}
+        title={t("shortcut.allScope", { mod: navigator.userAgent.includes("Macintosh") ? "⌘" : "Ctrl+" })}
       >
         <span className="rail-label">{t("rail.all")}</span>
         <EcosystemIcon id="all" />

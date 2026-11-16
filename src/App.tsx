@@ -72,6 +72,11 @@ export default function App() {
 
 function Workspace() {
   const t = useT();
+  // macOS 顯示 ⌘，其他平台顯示 Ctrl+
+  const modLabel = useMemo(
+    () => (navigator.userAgent.includes("Macintosh") ? "⌘" : "Ctrl+"),
+    [],
+  );
   const { lang, theme, setLang, setTheme } = useSettings();
 
   const [inventory, setInventory] = useState<Inventory | null>(null);
@@ -378,25 +383,28 @@ function Workspace() {
             className="btn"
             onClick={() => void runExport()}
             disabled={!inventory || exporting}
-            title={`${t("export.tooltip")} · ${t("shortcut.export")}`}
+            data-action="export"
+            title={`${t("export.tooltip")} · ${t("shortcut.export", { mod: modLabel })}`}
           >
             {exporting ? t("chrome.exporting") : t("chrome.export")}
           </button>
           <button
             type="button"
             className="btn btn--primary"
+            data-action="scan"
             onClick={() => void scan()}
             disabled={scanning}
-            title={t("shortcut.scan")}
+            title={t("shortcut.scan", { mod: modLabel })}
           >
             {scanning ? t("chrome.scanning") : t("chrome.scan")}
           </button>
           <button
             type="button"
             className="btn"
+            data-action="check"
             onClick={() => void runCheck()}
             disabled={!inventory || scanning || checking}
-            title={t("shortcut.check")}
+            title={t("shortcut.check", { mod: modLabel })}
           >
             {checking ? t("chrome.checking") : t("chrome.check")}
           </button>

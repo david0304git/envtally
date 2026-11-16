@@ -26,8 +26,22 @@ impl CmdResult {
     }
 }
 
-fn home() -> String {
-    std::env::var("HOME").unwrap_or_else(|_| String::from("/"))
+/// 家目錄（Windows 沒有 HOME，用 USERPROFILE）
+pub fn home() -> String {
+    if cfg!(windows) {
+        std::env::var("USERPROFILE").unwrap_or_else(|_| String::from("C:\\"))
+    } else {
+        std::env::var("HOME").unwrap_or_else(|_| String::from("/"))
+    }
+}
+
+/// PATH 分隔符：Windows 是 ';'，其他是 ':'
+pub fn path_separator() -> char {
+    if cfg!(windows) {
+        ';'
+    } else {
+        ':'
+    }
 }
 
 /// nvm 安裝了多個 node 版本時，取號碼最大的那個 bin 目錄。
@@ -59,6 +73,51 @@ pub fn search_dirs() -> &'static Vec<PathBuf> {
     DIRS.get_or_init(|| {
         let h = home();
         let mut dirs: Vec<String> = Vec::new();
+
+        if cfg!(windows) {
+            // Windows：系統 PATH 優先，再補常見安裝位置
+            if let Ok(inherited) = std::env::var("PATH") {
+                for p in inherited.split(path_separator()) {
+                    if !p.is_empty() {
+                        dirs.push(p.to_string());
+                    }
+                }
+            }
+            dirs.extend([
+                format!("{h}\\.cargo\\bin"),
+                format!("{h}\\.bun\\bin"),
+                format!("{h}\\.deno\\bin"),
+                format!("{h}\\.local\\bin"),
+                format!("{h}\\go\\bin"),
+                format!("{h}\\scoop\\shims"),
+            ]);
+            if let Ok(appdata) = std::env::var("APPDATA") {
+                dirs.push(format!("{appdata}\\npm"));
+            }
+            if let Ok(local) = std::env::var("LOCALAPPDATA") {
+                dirs.push(format!("{local}\\Microsoft\\WindowsApps"));
+                dirs.push(format!("{local}\\Programs\\Microsoft VS Code\\bin"));
+            }
+            if let Ok(program_data) = std::env::var("PROGRAMDATA") {
+                dirs.push(format!("{program_data}\\chocolatey\\bin"));
+            }
+            dirs.extend([
+                String::from("C:\\Program Files\\nodejs"),
+                String::from("C:\\Program Files\\Git\\cmd"),
+                String::from("C:\\Program Files\\dotnet"),
+                String::from("C:\\Program Files\\Java"),
+            ]);
+
+            let mut out: Vec<PathBuf> = Vec::new();
+            for d in dirs {
+                let pb = PathBuf::from(&d);
+                if pb.is_dir() && !out.contains(&pb) {
+                    out.push(pb);
+                }
+            }
+            return out;
+        }
+
         if let Some(bin) = newest_nvm_bin() {
             dirs.push(bin);
         }
@@ -98,16 +157,17 @@ pub fn search_dirs() -> &'static Vec<PathBuf> {
 pub fn path_string() -> &'static str {
     static P: OnceLock<String> = OnceLock::new();
     P.get_or_init(|| {
+        let separator = path_separator().to_string();
         search_dirs()
             .iter()
             .map(|p| p.display().to_string())
             .collect::<Vec<_>>()
-            .join(":")
+            .join(&separator)
     })
 }
 
 pub fn which(program: &str) -> Option<PathBuf> {
-    if program.contains('/') {
+    if program.contains('/') || (cfg!(windows) && program.contains('\\')) {
         let p = PathBuf::from(program);
         return if p.is_file() { Some(p) } else { None };
     }
@@ -115,6 +175,15 @@ pub fn which(program: &str) -> Option<PathBuf> {
         let cand = dir.join(program);
         if cand.is_file() {
             return Some(cand);
+        }
+        if cfg!(windows) {
+            // Windows 的可執行檔常帶副檔名（npm 是 npm.cmd）
+            for ext in ["exe", "cmd", "bat"] {
+                let with_ext = dir.join(format!("{program}.{ext}"));
+                if with_ext.is_file() {
+                    return Some(with_ext);
+                }
+            }
         }
     }
     None
@@ -157,9 +226,15 @@ pub fn run(program: &str, args: &[&str], timeout: Duration) -> Result<CmdResult,
         }),
         Ok(Err(e)) => Err(format!("{program} 執行失敗：{e}")),
         Err(_) => {
-            let _ = Command::new("/bin/kill")
-                .args(["-9", &pid.to_string()])
-                .output();
+            if cfg!(windows) {
+                let _ = Command::new("taskkill")
+                    .args(["/F", "/T", "/PID", &pid.to_string()])
+                    .output();
+            } else {
+                let _ = Command::new("/bin/kill")
+                    .args(["-9", &pid.to_string()])
+                    .output();
+            }
             Err(format!("{program} 逾時（{} 秒）", timeout.as_secs()))
         }
     }

@@ -18,7 +18,7 @@ pub struct ExportResult {
 }
 
 fn base_dir() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| String::from("/"));
+    let home = sh::home();
     let downloads = PathBuf::from(&home).join("Downloads");
     if downloads.is_dir() {
         downloads
@@ -28,7 +28,20 @@ fn base_dir() -> PathBuf {
 }
 
 fn stamp() -> String {
-    sh::run("date", &["+%Y-%m-%d-%H%M%S"], Duration::from_secs(10))
+    let command = if cfg!(windows) {
+        sh::run(
+            "powershell",
+            &[
+                "-NoProfile",
+                "-Command",
+                "Get-Date -Format yyyy-MM-dd-HHmmss",
+            ],
+            Duration::from_secs(15),
+        )
+    } else {
+        sh::run("date", &["+%Y-%m-%d-%H%M%S"], Duration::from_secs(10))
+    };
+    command
         .ok()
         .map(|out| out.stdout.trim().to_string())
         .filter(|text| !text.is_empty())

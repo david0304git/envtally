@@ -1,3 +1,5 @@
+#![allow(dead_code)] // 非 macOS 時整支模組只有 absent 版本
+
 use crate::models::Item;
 use crate::scan::{first_line, pick_version, Part};
 use crate::sh;
@@ -236,6 +238,13 @@ fn reconcile_missing(prefix: &str, part: &mut Part) {
     }
 }
 
+#[cfg(not(target_os = "macos"))]
+pub fn scan() -> Result<Part, String> {
+    // Homebrew 只存在於 macOS（Linux 版也不在支援範圍）
+    Ok(Part::absent())
+}
+
+#[cfg(target_os = "macos")]
 pub fn scan() -> Result<Part, String> {
     if !sh::exists("brew") {
         return Ok(Part::absent());

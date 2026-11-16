@@ -89,8 +89,7 @@ async function bootstrap() {
   // ?checked=1 自動觸發一次版本檢查（用 title 裡的 ⌘U 找按鈕，不受語言影響）
   if (params.get("checked") === "1") {
     window.setTimeout(() => {
-      const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>(".chrome-actions .btn"));
-      buttons.find((element) => element.title.includes("⌘U"))?.click();
+      document.querySelector<HTMLButtonElement>('[data-action="check"]')?.click();
     }, 400);
   }
 

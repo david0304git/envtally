@@ -9,8 +9,7 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 fn bun_global_root() -> PathBuf {
-    PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| String::from("/")))
-        .join(".bun/install/global/node_modules")
+    PathBuf::from(crate::sh::home()).join(".bun/install/global/node_modules")
 }
 
 fn read_package(root: &Path, dir: &str) -> Option<(String, String, Option<String>)> {

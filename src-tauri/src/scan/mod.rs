@@ -105,6 +105,16 @@ pub fn pick_version(text: &str) -> Option<String> {
 
 /// 依執行檔位置判斷來源（表格「來源」欄用）。
 pub fn origin_for(path: &str) -> &'static str {
+    let lower = path.to_lowercase();
+    if lower.starts_with("c:\\program files") {
+        return "系統安裝";
+    }
+    if lower.contains("\\scoop\\") {
+        return "Scoop";
+    }
+    if lower.contains("\\chocolatey\\") {
+        return "Chocolatey";
+    }
     if path.starts_with("/opt/homebrew/") || path.starts_with("/usr/local/Cellar/") {
         "Homebrew"
     } else if path.starts_with("/Library/Developer/CommandLineTools") {
@@ -150,6 +160,51 @@ fn specs() -> Vec<(&'static str, &'static str, &'static str, ScanFn, bool)> {
     ]
 }
 
+#[cfg(target_os = "windows")]
+fn machine() -> (String, String, String, String) {
+    let host = std::env::var("COMPUTERNAME").unwrap_or_else(|_| String::from("Windows PC"));
+    let os = sh::run("cmd", &["/c", "ver"], Duration::from_secs(10))
+        .ok()
+        .and_then(|out| pick_version(out.text()))
+        .unwrap_or_else(|| String::from("Windows"));
+    let arch = match std::env::consts::ARCH {
+        "aarch64" => "arm64",
+        other => other,
+    }
+    .to_string();
+    let model = sh::run(
+        "powershell",
+        &[
+            "-NoProfile",
+            "-Command",
+            "(Get-CimInstance Win32_ComputerSystem).Model",
+        ],
+        Duration::from_secs(15),
+    )
+    .ok()
+    .map(|out| out.stdout.trim().to_string())
+    .filter(|text| !text.is_empty() && text != "System Product Name")
+    .unwrap_or_else(|| String::from("Windows PC"));
+    (host, os, arch, model)
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+fn machine() -> (String, String, String, String) {
+    let host = sh::run("hostname", &[], Duration::from_secs(5))
+        .ok()
+        .map(|out| out.stdout.trim().to_string())
+        .filter(|text| !text.is_empty())
+        .unwrap_or_else(|| String::from("localhost"));
+    let model = String::from("PC");
+    (
+        host,
+        std::env::consts::OS.to_string(),
+        std::env::consts::ARCH.to_string(),
+        model,
+    )
+}
+
+#[cfg(target_os = "macos")]
 fn machine() -> (String, String, String, String) {
     let host = sh::run("scutil", &["--get", "ComputerName"], Duration::from_secs(5))
         .ok()

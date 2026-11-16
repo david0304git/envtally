@@ -123,6 +123,32 @@ pub fn discover() -> Vec<Interp> {
         }
     }
 
+    // Windows：官方安裝器的位置 + py launcher 回報的清單
+    if cfg!(windows) {
+        if let Ok(local) = std::env::var("LOCALAPPDATA") {
+            let base = std::path::Path::new(&local).join("Programs").join("Python");
+            if let Ok(entries) = std::fs::read_dir(base) {
+                for entry in entries.flatten() {
+                    let exe = entry.path().join("python.exe");
+                    if exe.is_file() {
+                        candidates.push(exe);
+                    }
+                }
+            }
+        }
+        if let Ok(out) = sh::run("py", &["-0p"], Duration::from_secs(15)) {
+            for line in out.stdout.lines() {
+                if let Some(idx) = line.find(":\\").or_else(|| line.find(":/")) {
+                    let path = line[idx..].trim().split_whitespace().next().unwrap_or("");
+                    let path = PathBuf::from(path);
+                    if path.is_file() {
+                        candidates.push(path);
+                    }
+                }
+            }
+        }
+    }
+
     let mut seen: Vec<PathBuf> = Vec::new();
     let mut out: Vec<Interp> = Vec::new();
     for path in candidates {
