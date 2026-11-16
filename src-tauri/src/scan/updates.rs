@@ -247,6 +247,32 @@ fn python_check() -> EcoCheck {
     check
 }
 
+/// 解析 `rustup check` 的輸出。
+/// 新舊格式都要吃（新版是小寫 `update available:`，舊版是大寫 `Update available :`）。
+/// 回傳 (有沒有辨識出狀態, [(toolchain, 最新版本)])
+fn parse_rustup_check(text: &str) -> (bool, Vec<(String, String)>) {
+    let lowered = text.to_lowercase();
+    let recognised = lowered.contains("up to date") || lowered.contains("update available");
+
+    let mut updates = Vec::new();
+    for line in text.lines() {
+        let Some((toolchain, rest)) = line.split_once(" - ") else {
+            continue;
+        };
+        if !rest.to_lowercase().contains("update available") {
+            continue;
+        }
+        let Some((_, newer)) = rest.split_once("->") else {
+            continue;
+        };
+        if let Some(latest) = pick_version(newer) {
+            updates.push((toolchain.trim().to_string(), latest));
+        }
+    }
+
+    (recognised, updates)
+}
+
 fn rustup() -> EcoCheck {
     let mut check = EcoCheck::new("rust");
     if !sh::exists("rustup") {
@@ -259,28 +285,19 @@ fn rustup() -> EcoCheck {
     match sh::run("rustup", &["check"], Duration::from_secs(90)) {
         Ok(out) => {
             let text = format!("{}\n{}", out.stdout, out.stderr);
-            if !text.contains("Up to date") && !text.contains("Update available") {
-                check
-                    .warnings
-                    .push(format!("rustup check 沒有回報狀態：{}", first_line(&text)));
+            let (recognised, updates) = parse_rustup_check(&text);
+            if !recognised {
+                check.warnings.push(format!(
+                    "rustup check 沒有回報狀態：{}",
+                    first_line(&text)
+                ));
                 return check;
             }
-            for line in text.lines() {
-                let Some((toolchain, rest)) = line.split_once(" - ") else {
-                    continue;
-                };
-                if !rest.contains("Update available") {
-                    continue;
-                }
-                let Some((_, newer)) = rest.split_once("->") else {
-                    continue;
-                };
-                if let Some(latest) = pick_version(newer) {
-                    check.patches.push(Patch {
-                        key: format!("rust|rustup|{}", toolchain.trim()),
-                        latest,
-                    });
-                }
+            for (toolchain, latest) in updates {
+                check.patches.push(Patch {
+                    key: format!("rust|rustup|{toolchain}"),
+                    latest,
+                });
             }
             check.ok = true;
         }
@@ -408,7 +425,35 @@ fn dotnet() -> EcoCheck {
             }
 
             if entry.get("support-phase").and_then(|v| v.as_str()) == Some("eol") {
-                check.warnings.push(format!(".NET {channel} 已停止支援（EOL）"));
+                let channels = value
+                    .get("releases-index")
+                    .and_then(|list| list.as_array())
+                    .cloned()
+                    .unwrap_or_default();
+                // support-phase 只有 active/eol；LTS 與否要看 release-type
+                let newest_active = |lts_only: bool| {
+                    channels
+                        .iter()
+                        .filter(|row| {
+                            row.get("support-phase").and_then(|v| v.as_str()) != Some("eol")
+                        })
+                        .filter(|row| {
+                            !lts_only
+                                || row.get("release-type").and_then(|v| v.as_str()) == Some("lts")
+                        })
+                        .filter_map(|row| row.get("channel-version").and_then(|v| v.as_str()))
+                        .max_by(|a, b| version_key(a).cmp(&version_key(b)))
+                        .map(str::to_string)
+                };
+                let target = newest_active(true)
+                    .map(|version| format!("{version}（LTS）"))
+                    .or_else(|| newest_active(false));
+                check.warnings.push(match target {
+                    Some(target) => {
+                        format!(".NET {channel} 已停止支援（EOL），建議移到 {target}")
+                    }
+                    None => format!(".NET {channel} 已停止支援（EOL）"),
+                });
             }
             check.ok = true;
         }
@@ -500,4 +545,39 @@ fn ruby() -> EcoCheck {
             .push(format!("Ruby 版本查詢失敗（GitHub API）：{e}")),
     }
     check
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_rustup_check;
+
+    #[test]
+    fn parses_current_lowercase_rustup_output() {
+        // 2026-11 實際的 rustup 1.29.x 輸出（注意是小寫、且含 rustup 自己那一行）
+        let text = "stable-aarch64-apple-darwin - update available: 1.99.1 (58cf8f9c3 2026-10-13) -> 1.100.0 (0ef1bc386 2026-11-09)\n\
+                    rustup - update available : 1.29.2 -> 1.29.3\n";
+        let (recognised, updates) = parse_rustup_check(text);
+        assert!(recognised);
+        assert_eq!(updates.len(), 2);
+        assert_eq!(updates[0].0, "stable-aarch64-apple-darwin");
+        assert_eq!(updates[0].1, "1.100.0");
+        assert_eq!(updates[1].0, "rustup");
+        assert_eq!(updates[1].1, "1.29.3");
+    }
+
+    #[test]
+    fn parses_legacy_capitalised_output() {
+        let text = "stable-aarch64-apple-darwin - Up to date : 1.99.1 (58cf8f9c3 2026-10-13)\n";
+        let (recognised, updates) = parse_rustup_check(text);
+        assert!(recognised);
+        assert!(updates.is_empty());
+    }
+
+    #[test]
+    fn rejects_unrelated_output() {
+        let text = "error: could not create temp file /Users/x/.rustup/tmp/abc_file: Operation not permitted";
+        let (recognised, updates) = parse_rustup_check(text);
+        assert!(!recognised);
+        assert!(updates.is_empty());
+    }
 }

@@ -269,7 +269,7 @@ mod tests {
         for patch in updates.patches.iter().take(4) {
             println!("  樣本 {} -> {}", patch.key, patch.latest);
         }
-        for ecosystem in ["java", "dotnet", "php", "ruby"] {
+        for ecosystem in ["rust", "java", "dotnet", "php", "ruby"] {
             for patch in updates
                 .patches
                 .iter()

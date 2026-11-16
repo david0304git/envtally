@@ -76,6 +76,22 @@ pub fn scan() -> Result<Part, String> {
         }
     }
 
+    // rustup 本體（rustup check 也會回報它自己的更新，沒有這一項就對不到 patch）
+    if let Ok(out) = sh::run("rustup", &["--version"], Duration::from_secs(20)) {
+        if let Some(version) = pick_version(out.text()) {
+            part.items.push(
+                Item::new("rust", "rustup", "rustup", &version)
+                    .kind("toolchain")
+                    .at(sh::which("rustup")
+                        .map(|p| p.display().to_string())
+                        .unwrap_or_default())
+                    .about("Rust 工具鏈管理器本體：安裝/切換 toolchain、更新自己")
+                    .cmd("rustup self update")
+                    .rm("rustup self uninstall"),
+            );
+        }
+    }
+
     ordered.sort_by(|a, b| {
         b.0.cmp(&a.0)
             .then_with(|| version_key(&b.1).cmp(&version_key(&a.1)))
