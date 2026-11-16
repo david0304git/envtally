@@ -65,7 +65,8 @@ pub fn scan() -> Result<Part, String> {
             .kind("runtime")
             .at(path.display().to_string())
             .about("JavaScript 執行環境（nvm 安裝的其中一個版本）")
-            .cmd(format!("nvm use {dir_name}"));
+            .cmd(format!("nvm use {dir_name}"))
+            .rm(format!("nvm uninstall {dir_name}"));
         if is_active {
             item = item.note("目前 PATH 使用中");
         }
@@ -127,7 +128,8 @@ pub fn scan() -> Result<Part, String> {
                         }
                         let mut item = Item::new("node", "npm 全域", name, &version)
                             .kind("package")
-                            .cmd(format!("npm install -g {name}@latest"));
+                            .cmd(format!("npm install -g {name}@latest"))
+                            .rm(format!("npm uninstall -g {name}"));
                         if let Some(desc) =
                             global_root.as_deref().and_then(|root| package_description(root, name))
                         {

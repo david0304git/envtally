@@ -83,7 +83,8 @@ fn collect_from_json(prefix: &str, part: &mut Part) -> Result<(), String> {
         let mut item = Item::new("brew", "Homebrew", &formula.name, &version)
             .kind("formula")
             .at(format!("{prefix}/opt/{}", formula.name))
-            .cmd(format!("brew upgrade {}", formula.name));
+            .cmd(format!("brew upgrade {}", formula.name))
+            .rm(format!("brew uninstall {}", formula.name));
 
         if let Some(desc) = formula.desc {
             item = item.about(desc);
@@ -107,7 +108,8 @@ fn collect_from_json(prefix: &str, part: &mut Part) -> Result<(), String> {
         let mut item = Item::new("brew", "Homebrew Cask", &token, &version)
             .kind("cask")
             .at(format!("/Applications/{token}.app"))
-            .cmd(format!("brew upgrade --cask {token}"));
+            .cmd(format!("brew upgrade --cask {token}"))
+            .rm(format!("brew uninstall --cask {token}"));
         if let Some(desc) = cask.desc {
             item = item.about(desc);
         }
@@ -135,7 +137,8 @@ fn collect_from_legacy(prefix: &str, part: &mut Part) {
                 let mut item = Item::new("brew", "Homebrew", name, &version)
                     .kind("formula")
                     .at(format!("{prefix}/opt/{name}"))
-                    .cmd(format!("brew upgrade {name}"));
+                    .cmd(format!("brew upgrade {name}"))
+                    .rm(format!("brew uninstall {name}"));
                 if versions.len() > 1 {
                     let others: Vec<&str> = versions
                         .into_iter()
@@ -166,7 +169,8 @@ fn collect_from_legacy(prefix: &str, part: &mut Part) {
                     Item::new("brew", "Homebrew Cask", name, version)
                         .kind("cask")
                         .at(format!("/Applications/{name}.app"))
-                        .cmd(format!("brew upgrade --cask {name}")),
+                        .cmd(format!("brew upgrade --cask {name}"))
+                        .rm(format!("brew uninstall --cask {name}")),
                 );
             }
         }
@@ -216,6 +220,7 @@ fn reconcile_missing(prefix: &str, part: &mut Part) {
                 .kind("formula")
                 .at(format!("{prefix}/opt/{name}"))
                 .cmd(format!("brew upgrade {name}"))
+                .rm(format!("brew uninstall {name}"))
                 .note("brew info 沒有回報此 formula（可能已停用或改名）"),
         );
     }

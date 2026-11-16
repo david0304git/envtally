@@ -181,13 +181,17 @@ fn php(part: &mut Part) {
     let path_str = path.display().to_string();
     match sh::run("php", &["-v"], Duration::from_secs(20)) {
         Ok(out) => match pick_version(out.text()) {
-            Some(version) => part.items.push(
-                Item::new("runtimes", origin_for(&path_str), "PHP", &version)
+            Some(version) => {
+                let origin = origin_for(&path_str);
+                let mut item = Item::new("runtimes", origin, "PHP", &version)
                     .kind("runtime")
                     .at(path_str)
-                    .about("PHP 直譯器：常用於網站後端與命令列腳本")
-                    .cmd("brew upgrade php"),
-            ),
+                    .about("PHP 直譯器：常用於網站後端與命令列腳本");
+                if origin == "Homebrew" {
+                    item = item.cmd("brew upgrade php").rm("brew uninstall php");
+                }
+                part.items.push(item);
+            }
             None => part.warn("PHP 版本輸出無法解析".to_string()),
         },
         Err(e) => part.warn(format!("PHP 讀取失敗：{e}")),
@@ -245,7 +249,10 @@ fn ruby(part: &mut Part) {
                     item = item.about(summary.clone());
                 }
                 if is_default {
+                    // default gem 動了會拖累系統 Ruby，不提供移除指令
                     item = item.note("Ruby 內建 default gem（更新通常需要 sudo，不建議動）");
+                } else {
+                    item = item.rm(format!("gem uninstall {name}"));
                 }
                 part.items.push(item);
             }

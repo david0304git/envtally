@@ -6,18 +6,55 @@ interface Props {
   onClose: () => void;
 }
 
-export default function Inspector({ row, onClose }: Props) {
-  const [copyState, setCopyState] = useState<"idle" | "ok" | "manual">("idle");
-  const command = row.updateCommand;
+type CopyState = "idle" | "ok" | "manual";
 
-  const copyCommand = async (text: string) => {
+interface CommandRowProps {
+  label: string;
+  command: string;
+  state: CopyState;
+  onCopy: (text: string) => void;
+}
+
+function CommandRow({ label, command, state, onCopy }: CommandRowProps) {
+  return (
+    <div className="field">
+      <dt>{label}</dt>
+      <dd>
+        <div className="cmd">
+          <code>{command}</code>
+          <button type="button" className="btn btn--tiny" onClick={() => onCopy(command)}>
+            {state === "ok" ? "已複製" : state === "manual" ? "請手動複製" : "複製"}
+          </button>
+        </div>
+      </dd>
+    </div>
+  );
+}
+
+export default function Inspector({ row, onClose }: Props) {
+  const [copiedText, setCopiedText] = useState<string | null>(null);
+  const [failedText, setFailedText] = useState<string | null>(null);
+
+  const copy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopyState("ok");
+      setCopiedText(text);
+      setFailedText(null);
     } catch {
-      setCopyState("manual");
+      setFailedText(text);
+      setCopiedText(null);
     }
-    window.setTimeout(() => setCopyState("idle"), 2200);
+    window.setTimeout(() => {
+      setCopiedText(null);
+      setFailedText(null);
+    }, 2200);
+  };
+
+  const stateOf = (command: string | null): CopyState => {
+    if (command === null) return "idle";
+    if (copiedText === command) return "ok";
+    if (failedText === command) return "manual";
+    return "idle";
   };
 
   return (
@@ -50,18 +87,22 @@ export default function Inspector({ row, onClose }: Props) {
           </div>
         )}
 
-        {command && (
-          <div className="field">
-            <dt>更新指令</dt>
-            <dd>
-              <div className="cmd">
-                <code>{command}</code>
-                <button type="button" className="btn btn--tiny" onClick={() => void copyCommand(command)}>
-                  {copyState === "ok" ? "已複製" : copyState === "manual" ? "請手動複製" : "複製"}
-                </button>
-              </div>
-            </dd>
-          </div>
+        {row.updateCommand && (
+          <CommandRow
+            label="更新指令"
+            command={row.updateCommand}
+            state={stateOf(row.updateCommand)}
+            onCopy={(text) => void copy(text)}
+          />
+        )}
+
+        {row.removeCommand && (
+          <CommandRow
+            label="移除指令"
+            command={row.removeCommand}
+            state={stateOf(row.removeCommand)}
+            onCopy={(text) => void copy(text)}
+          />
         )}
 
         {row.note && (
@@ -72,7 +113,9 @@ export default function Inspector({ row, onClose }: Props) {
         )}
       </dl>
 
-      <p className="foot-note">只讀工具：不會替你執行上面的指令，要更新請自己貼進終端機。</p>
+      <p className="foot-note">
+        只讀工具：上面的指令不會被自動執行。移除指令貼進終端機後會真的刪掉這個套件，動手前先確認。
+      </p>
     </aside>
   );
 }

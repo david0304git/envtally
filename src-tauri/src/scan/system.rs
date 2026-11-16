@@ -41,7 +41,7 @@ pub fn scan() -> Result<Part, String> {
         let path_str = path.display().to_string();
         let origin = origin_for(&path_str);
 
-        let item = match sh::run(program, args, Duration::from_secs(15)) {
+        let mut item = match sh::run(program, args, Duration::from_secs(15)) {
             Ok(out) => {
                 let text = format!("{}\n{}", out.stdout, out.stderr);
                 let version = pick_version(&text).unwrap_or_else(|| String::from("未知"));
@@ -58,6 +58,11 @@ pub fn scan() -> Result<Part, String> {
                     .about(about)
             }
         };
+
+        // 只有 Homebrew 裝的可以這樣移除；macOS 內建或 Xcode 附的不提供
+        if origin == "Homebrew" {
+            item = item.rm(format!("brew uninstall {program}"));
+        }
         part.items.push(item);
     }
 

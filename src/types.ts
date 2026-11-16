@@ -10,6 +10,7 @@ export interface Item {
   kind: string;
   location: string | null;
   updateCommand: string | null;
+  removeCommand: string | null;
   note: string | null;
   description: string | null;
   status: Status;

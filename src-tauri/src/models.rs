@@ -31,6 +31,8 @@ pub struct Item {
     pub kind: String,
     pub location: Option<String>,
     pub update_command: Option<String>,
+    /// 對應的移除指令（只顯示、不執行）
+    pub remove_command: Option<String>,
     pub note: Option<String>,
     /// 這個套件／工具在做什麼（來自上游 metadata，不是我手寫的）
     pub description: Option<String>,
@@ -51,6 +53,7 @@ impl Item {
             kind: String::from("package"),
             location: None,
             update_command: None,
+            remove_command: None,
             note: None,
             description: None,
             status: Status::Unknown,
@@ -75,6 +78,11 @@ impl Item {
 
     pub fn note(mut self, note: impl Into<String>) -> Self {
         self.note = Some(note.into());
+        self
+    }
+
+    pub fn rm(mut self, command: impl Into<String>) -> Self {
+        self.remove_command = Some(command.into());
         self
     }
 

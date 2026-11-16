@@ -4,7 +4,7 @@
 
 ![介面截圖](docs/screenshot.png)
 
-點一列，右側會顯示這個套件**在做什麼**、裝在哪、以及可以複製的更新指令：
+點一列，右側會顯示這個套件**在做什麼**、裝在哪，以及可以直接複製的**更新／移除指令**：
 
 <img src="docs/inspector.png" width="320" alt="細節面板" />
 
@@ -49,7 +49,22 @@
 
 這個工具不寫入任何系統設定、不執行升級、不改 shell 設定檔。它唯一做的事是**跑查詢指令並解析輸出**。
 
-細節抽屜會給你現成的更新指令（例如 `brew upgrade aom`）方便複製，但**不會替你執行**；要動手請自己貼進終端機。
+細節抽屜會給你現成的更新與移除指令（例如 `brew upgrade aom` / `brew uninstall aom`）方便複製，但**不會替你執行**；要動手請自己貼進終端機。
+
+### 更新／移除指令對照
+
+| 來源 | 更新 | 移除 |
+|---|---|---|
+| Homebrew formula | `brew upgrade <name>` | `brew uninstall <name>` |
+| Homebrew cask | `brew upgrade --cask <token>` | `brew uninstall --cask <token>` |
+| pip 套件 | `python3.13 -m pip install -U <name>` | `python3.13 -m pip uninstall <name>` |
+| npm 全域 | `npm install -g <name>@latest` | `npm uninstall -g <name>` |
+| Node（nvm） | `nvm use vX.Y.Z` | `nvm uninstall vX.Y.Z` |
+| Rust toolchain | `rustup update <toolchain>` | `rustup toolchain uninstall <toolchain>` |
+| cargo 執行檔 | `cargo install <name> --force` | `cargo uninstall <name>` |
+| Ruby gem | `gem update <name>` | `gem uninstall <name>` |
+
+**刻意不給移除指令**的項目（共 54 項）：直譯器／工具鏈本體（Python、npm、Homebrew 自己、.NET SDK、JDK）、Ruby default gem、macOS 內建或 Xcode 附的命令列工具。這些移掉會弄壞系統或整個環境，與其給一條危險的指令，不如不給。
 
 ## 開發
 

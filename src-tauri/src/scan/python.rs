@@ -196,7 +196,8 @@ pub fn scan() -> Result<Part, String> {
                 for pkg in packages {
                     let mut item = Item::new("python", &interp.source, &pkg.name, &pkg.version)
                         .kind("package")
-                        .cmd(format!("{label} -m pip install -U {}", pkg.name));
+                        .cmd(format!("{label} -m pip install -U {}", pkg.name))
+                        .rm(format!("{label} -m pip uninstall {}", pkg.name));
                     item = item.about(pkg.summary);
                     part.items.push(item);
                 }

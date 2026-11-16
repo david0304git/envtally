@@ -48,7 +48,8 @@ pub fn scan() -> Result<Part, String> {
                 .kind("toolchain")
                 .at(entry.path().display().to_string())
                 .about("Rust 編譯器與工具鏈（rustc / cargo / rustup），一個 toolchain 就是一套完整版本")
-                .cmd(format!("rustup update {name}"));
+                .cmd(format!("rustup update {name}"))
+                .rm(format!("rustup toolchain uninstall {name}"));
             if active.starts_with(&name) {
                 item = item.note("預設 toolchain");
             }
@@ -86,7 +87,8 @@ pub fn scan() -> Result<Part, String> {
                 part.items.push(
                     Item::new("rust", "cargo install", name, version)
                         .kind("binary")
-                        .cmd(format!("cargo install {name} --force")),
+                        .cmd(format!("cargo install {name} --force"))
+                        .rm(format!("cargo uninstall {name}")),
                 );
             }
         }
