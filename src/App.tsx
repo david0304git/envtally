@@ -398,14 +398,22 @@ function Workspace() {
               aria-expanded={settingsOpen}
               title={t("chrome.settings")}
             >
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <circle cx="7" cy="7" r="2.2" stroke="currentColor" strokeWidth="1.3" />
-                <path
-                  d="M7 1.6v1.5M7 10.9v1.5M1.6 7h1.5M10.9 7h1.5M3.2 3.2l1 1M9.8 9.8l1 1M10.8 3.2l-1 1M4.2 9.8l-1 1"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                />
+              {/* 齒輪：厚齒環 + 8 個短齒（比放射狀線條更不像太陽） */}
+              <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true">
+                <g fill="currentColor">
+                  {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
+                    <rect
+                      key={angle}
+                      x="6.15"
+                      y="0.5"
+                      width="1.7"
+                      height="2.2"
+                      rx="0.5"
+                      transform={`rotate(${angle} 7 7)`}
+                    />
+                  ))}
+                  <circle cx="7" cy="7" r="3.9" fill="none" stroke="currentColor" strokeWidth="1.9" />
+                </g>
               </svg>
             </button>
             {settingsOpen && (
