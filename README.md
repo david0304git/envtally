@@ -88,6 +88,38 @@ npm run dev          # 然後開 http://127.0.0.1:5173/preview.html
 
 注意：預覽模式的「有新版」版本號是人工加的（真實版本檢查要連網），只有清單本身是真實資料。
 
+## 移除
+
+`scripts/uninstall.sh` 預設**只列清單、什麼都不刪**，加 `--yes` 才動手：
+
+| 指令 | 會刪什麼 | 回收 |
+|---|---|---|
+| `bash scripts/uninstall.sh` | 預覽（等於 `npm run app:uninstall`） | — |
+| `bash scripts/uninstall.sh --yes` | app 本體 + `~/Library` 快取 | ~4.7 MB |
+| `bash scripts/uninstall.sh --with-caches --yes` | 再加建置產物（**保留原始碼**） | ~3.6 GB |
+| `bash scripts/uninstall.sh --everything --yes` | 以上全部，並印出最後一行（自己刪專案資料夾） | ~3.7 GB |
+
+### 這個工具在系統上留下什麼
+
+| 位置 | 大小 | 是什麼 | 手動刪除 |
+|---|---|---|---|
+| `src-tauri/target/release/bundle/macos/Version Manager.app` | 4.4 MB | 打包好的 app | `rm -rf "…/Version Manager.app"` |
+| `~/Library/Caches/io.lutszhong.versionmanager` | 8 KB | WKWebView 網路快取 | `rm -rf` |
+| `~/Library/WebKit/io.lutszhong.versionmanager` | 332 KB | WKWebView 資料目錄 | `rm -rf` |
+| `src-tauri/target` | 3.2 GB | Rust 建置產物（debug + release） | `cargo clean` |
+| `.cargo-home` / `.npm-cache` | 173 / 165 MB | 開發時導向專案內的套件快取 | `rm -rf` |
+| `node_modules` | 87 MB | 前端相依 | `rm -rf` |
+| `.chrome-profile` | 7.9 MB | 無頭 Chrome 截圖用的暫存 profile | `rm -rf` |
+
+**沒有**裝到別的地方：沒有 LaunchAgent／登入項目／開機啟動、沒有改 `~/.zshrc` 之類的 shell 設定、沒有 `npm link` 或 `cargo install` 任何全域指令，也**沒有改動** Homebrew／pip／npm 的套件狀態（掃描全程唯讀）。
+
+刪掉快取後要重建：
+
+```bash
+npm install                                    # 重建 node_modules
+CARGO_HOME=$PWD/.cargo-home npm run app:build  # 重新下載 crates 並打包（1–2 分鐘）
+```
+
 ## 檔案結構
 
 ```
