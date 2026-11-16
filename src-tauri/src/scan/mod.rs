@@ -95,14 +95,15 @@ pub fn origin_for(path: &str) -> &'static str {
     }
 }
 
-fn specs() -> Vec<(&'static str, &'static str, &'static str, ScanFn)> {
+/// (id, 名稱, 說明, 掃描函式, 是否有線上版本比對)
+fn specs() -> Vec<(&'static str, &'static str, &'static str, ScanFn, bool)> {
     vec![
-        ("brew", "Homebrew", "formula 與 cask", brew::scan),
-        ("python", "Python", "pip 套件與直譯器", python::scan),
-        ("node", "Node.js", "nvm 版本與全域 npm", node::scan),
-        ("rust", "Rust", "rustup toolchain 與 cargo bin", rust::scan),
-        ("runtimes", "語言執行環境", "Java、.NET、PHP、Ruby", runtimes::scan),
-        ("system", "系統工具", "命令列工具版本", system::scan),
+        ("brew", "Homebrew", "formula 與 cask", brew::scan, true),
+        ("python", "Python", "pip 套件與直譯器", python::scan, true),
+        ("node", "Node.js", "nvm 版本與全域 npm", node::scan, true),
+        ("rust", "Rust", "rustup toolchain 與 cargo bin", rust::scan, true),
+        ("runtimes", "語言執行環境", "Java、.NET、PHP、Ruby", runtimes::scan, false),
+        ("system", "系統工具", "命令列工具版本", system::scan, false),
     ]
 }
 
@@ -148,11 +149,18 @@ pub fn collect() -> Inventory {
     let results = std::thread::scope(|scope| {
         let handles: Vec<_> = specs
             .into_iter()
-            .map(|(id, label, blurb, f)| {
+            .map(|(id, label, blurb, f, checkable)| {
                 scope.spawn(move || {
                     let t = Instant::now();
                     let outcome = f();
-                    (id, label, blurb, outcome, t.elapsed().as_millis() as u64)
+                    (
+                        id,
+                        label,
+                        blurb,
+                        checkable,
+                        outcome,
+                        t.elapsed().as_millis() as u64,
+                    )
                 })
             })
             .collect();
@@ -164,7 +172,7 @@ pub fn collect() -> Inventory {
 
     let mut ecosystems: Vec<Ecosystem> = Vec::new();
     for result in results {
-        let Ok((id, label, blurb, outcome, duration_ms)) = result else {
+        let Ok((id, label, blurb, checkable, outcome, duration_ms)) = result else {
             continue;
         };
         let mut eco = Ecosystem {
@@ -172,6 +180,7 @@ pub fn collect() -> Inventory {
             label: label.to_string(),
             blurb: blurb.to_string(),
             items: Vec::new(),
+            checkable,
             error: None,
             warnings: Vec::new(),
             duration_ms,

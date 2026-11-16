@@ -69,7 +69,7 @@ export default function Inspector({ row, onClose }: Props) {
         <h2 className="inspector-name">{row.name}</h2>
         <p className="inspector-version">{row.version}</p>
         <p className={`inspector-status is-${row.statusResolved}`}>
-          {statusLabel(row.statusResolved, row.latestResolved)}
+          {statusLabel(row.statusResolved, row.latestResolved, row.checkable)}
         </p>
         {row.description && <p className="inspector-desc">{row.description}</p>}
       </div>

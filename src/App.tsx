@@ -98,13 +98,22 @@ export default function App() {
 
   const ecosystems = inventory?.ecosystems ?? [];
 
+  const checkableEcosystems = useMemo(
+    () =>
+      new Set(
+        ecosystems.filter((eco) => eco.checkable).map((eco) => eco.id),
+      ),
+    [ecosystems],
+  );
+
   const allRows = useMemo(() => {
     if (!inventory) return [];
     return resolveRows(
       inventory.ecosystems.flatMap((eco) => eco.items),
       updates,
+      checkableEcosystems,
     );
-  }, [inventory, updates]);
+  }, [inventory, updates, checkableEcosystems]);
 
   const counts = useMemo(() => {
     const map = new Map<string, { total: number; outdated: number }>();

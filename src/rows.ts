@@ -5,6 +5,8 @@ export const ALL_SCOPE = "all";
 export interface Row extends Item {
   statusResolved: Status;
   latestResolved: string | null;
+  /// 這個分類有沒有線上版本比對（沒有的話「未檢查」是死路，不能那樣寫）
+  checkable: boolean;
 }
 
 export type SortKey = "name" | "version" | "source";
@@ -37,7 +39,7 @@ export function kindLabel(kind: string): string {
   return KIND_LABEL[kind] ?? kind;
 }
 
-export function statusLabel(status: Status, latest: string | null): string {
+export function statusLabel(status: Status, latest: string | null, checkable: boolean): string {
   switch (status) {
     case "outdated":
       return latest ? `可更新至 ${latest}` : "可更新";
@@ -46,17 +48,24 @@ export function statusLabel(status: Status, latest: string | null): string {
     case "error":
       return "讀取失敗";
     default:
-      return "尚未檢查";
+      return checkable
+        ? "還沒比對上游版本（按「檢查更新」）"
+        : "不檢查這個分類的版本";
   }
 }
 
 /** 把「版本檢查結果」疊到掃描結果上，得到每列要顯示的狀態。 */
-export function resolveRows(items: Item[], updates: Updates | null): Row[] {
+export function resolveRows(
+  items: Item[],
+  updates: Updates | null,
+  checkableEcosystems: ReadonlySet<string>,
+): Row[] {
   if (!updates) {
     return items.map((item) => ({
       ...item,
       statusResolved: "unknown" as Status,
       latestResolved: null,
+      checkable: checkableEcosystems.has(item.ecosystem),
     }));
   }
   const patches = new Map(updates.patches.map((patch) => [patch.key, patch.latest]));
@@ -68,7 +77,12 @@ export function resolveRows(items: Item[], updates: Updates | null): Row[] {
       : checked.has(item.ecosystem)
         ? "current"
         : "unknown";
-    return { ...item, statusResolved, latestResolved: latest };
+    return {
+      ...item,
+      statusResolved,
+      latestResolved: latest,
+      checkable: checkableEcosystems.has(item.ecosystem),
+    };
   });
 }
 

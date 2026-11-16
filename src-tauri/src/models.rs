@@ -103,6 +103,8 @@ pub struct Ecosystem {
     pub label: String,
     pub blurb: String,
     pub items: Vec<Item>,
+    /// 這個分類有沒有「向上游比對版本」的能力（沒有就別顯示成「待檢查」）
+    pub checkable: bool,
     pub error: Option<String>,
     pub warnings: Vec<String>,
     pub duration_ms: u64,
