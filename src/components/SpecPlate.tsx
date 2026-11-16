@@ -21,7 +21,7 @@ export default function SpecPlate({ inventory, total, outdated }: Props) {
           </div>
           <div className="plate-spec">
             <dt>{t("plate.os")}</dt>
-            <dd>macOS {inventory?.os ?? "—"}</dd>
+            <dd>{inventory?.os ?? "—"}</dd>
           </div>
           <div className="plate-spec">
             <dt>{t("plate.arch")}</dt>

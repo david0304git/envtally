@@ -236,17 +236,19 @@ pub fn ruby() -> Result<Part, String> {
         }
     }
     part.headline = Some(version.clone());
-    part.items.push(
-        Item::new("ruby", origin, "Ruby", &version)
-            .kind("runtime")
-            .at(path_str)
-            .about("Ruby 直譯器：macOS 內建版本，系統工具（如 CocoaPods）會用到")
-            .note_i18n(
-                "macOS 內建；要新版請用 brew install ruby，不要直接替換系統 Ruby",
-                "note.ruby.builtin",
-                &[],
-            ),
-    );
+
+    let mut ruby_item = Item::new("ruby", origin, "Ruby", &version)
+        .kind("runtime")
+        .at(path_str)
+        .about("Ruby 直譯器");
+    if cfg!(target_os = "macos") {
+        ruby_item = ruby_item.note_i18n(
+            "macOS 內建；要新版請用 brew install ruby，不要直接替換系統 Ruby",
+            "note.ruby.builtin",
+            &[],
+        );
+    }
+    part.items.push(ruby_item);
 
     let summaries = gem_summaries();
 

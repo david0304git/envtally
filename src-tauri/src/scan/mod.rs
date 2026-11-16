@@ -160,12 +160,31 @@ fn specs() -> Vec<(&'static str, &'static str, &'static str, ScanFn, bool)> {
     ]
 }
 
+/// Windows 的顯示名稱：build >= 22000 就是 Windows 11。
+/// 抽成純函式，這樣在 macOS 上也能用單元測試驗證。
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
+fn windows_os_label(version: &str) -> String {
+    let build = version
+        .split('.')
+        .nth(2)
+        .and_then(|part| part.parse::<u32>().ok())
+        .unwrap_or(0);
+    if build >= 22000 {
+        format!("Windows 11 ({version})")
+    } else {
+        format!("Windows {version}")
+    }
+}
+
 #[cfg(target_os = "windows")]
 fn machine() -> (String, String, String, String) {
     let host = std::env::var("COMPUTERNAME").unwrap_or_else(|_| String::from("Windows PC"));
+    // ver 的輸出：Microsoft Windows [Version 10.0.22631.3155]
+    // build >= 22000 就是 Windows 11
     let os = sh::run("cmd", &["/c", "ver"], Duration::from_secs(10))
         .ok()
         .and_then(|out| pick_version(out.text()))
+        .map(|version| windows_os_label(&version))
         .unwrap_or_else(|| String::from("Windows"));
     let arch = match std::env::consts::ARCH {
         "aarch64" => "arm64",
@@ -196,9 +215,13 @@ fn machine() -> (String, String, String, String) {
         .filter(|text| !text.is_empty())
         .unwrap_or_else(|| String::from("localhost"));
     let model = String::from("PC");
+    let os = sh::run("uname", &["-r"], Duration::from_secs(5))
+        .ok()
+        .map(|out| format!("Linux {}", out.stdout.trim()))
+        .unwrap_or_else(|| String::from("Linux"));
     (
         host,
-        std::env::consts::OS.to_string(),
+        os,
         std::env::consts::ARCH.to_string(),
         model,
     )
@@ -220,8 +243,8 @@ fn machine() -> (String, String, String, String) {
 
     let os = sh::run("sw_vers", &["-productVersion"], Duration::from_secs(5))
         .ok()
-        .map(|r| r.stdout.trim().to_string())
-        .filter(|s| !s.is_empty())
+        .map(|r| format!("macOS {}", r.stdout.trim()))
+        .filter(|text| text != "macOS ")
         .unwrap_or_else(|| String::from("macOS"));
 
     let arch = match std::env::consts::ARCH {
@@ -335,6 +358,17 @@ mod tests {
     }
 
     #[test]
+    fn windows_os_label_picks_the_right_name() {
+        assert_eq!(
+            windows_os_label("10.0.22631.3155"),
+            "Windows 11 (10.0.22631.3155)"
+        );
+        assert_eq!(windows_os_label("10.0.19045.1"), "Windows 10.0.19045.1");
+        // 非預期格式也不該 panic
+        assert_eq!(windows_os_label("odd"), "Windows odd");
+    }
+
+    #[test]
     fn item_ids_are_unique_and_patchable() {
         let a = Item::new("python", "Python 3.13.6", "numpy", "2.3.1");
         let b = Item::new("python", "Python 3.14.0", "numpy", "2.3.1");
@@ -426,6 +460,7 @@ mod tests {
             );
         }
         assert!(total > 0, "任何生態系都沒抓到東西");
-        assert!(inv.os.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false));
+        assert!(!inv.os.is_empty(), "os 名稱是空的");
+        assert!(inv.os.chars().any(|c| c.is_ascii_digit()), "os 應含版本號：{}", inv.os);
     }
 }

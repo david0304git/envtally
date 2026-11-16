@@ -157,9 +157,9 @@ const BY_KIND: Record<string, Triple> = {
     "PHP interpreter: web backends and CLI scripts",
   ],
   "ruby|runtime": [
-    "Ruby 直譯器：macOS 內建版本，系統工具（如 CocoaPods）會用到",
-    "Ruby 解释器：macOS 内置版本，系统工具（如 CocoaPods）会用到",
-    "Ruby interpreter: the macOS built-in, used by tools such as CocoaPods",
+    "Ruby 直譯器：系統工具（如 CocoaPods）會用到",
+    "Ruby 解释器：系统工具（如 CocoaPods）会用到",
+    "Ruby interpreter, used by tools such as CocoaPods",
   ],
 };
 
