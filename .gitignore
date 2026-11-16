@@ -28,3 +28,8 @@ s-*.png
 # CI 產物與 gh 快取
 .ci-artifacts/
 .gh-cache/
+
+# 圖示／頂部設計稿（只放本機參考，不進版控）
+icon-options.png
+icon-check.png
+iconlab.html
