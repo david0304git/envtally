@@ -2,11 +2,7 @@
 
 本機環境與套件盤點台。一個 Tauri 桌面應用，把這台 Mac 上「裝了什麼、哪個版本、哪些落後了」集中在一張表裡。
 
-![介面截圖](docs/screenshot.png)
-
 點一列，右側會顯示這個套件**在做什麼**、裝在哪，以及可以直接複製的**更新／移除指令**：
-
-<img src="docs/inspector.png" width="320" alt="細節面板" />
 
 ## 它做什麼
 
@@ -51,8 +47,6 @@
 ### 環境版本總覽（收合分類）
 
 「全部」檢視的分類列可以整列點下去收合；收合後右邊直接給這組的**環境版本**，不用點進去看子套件：
-
-![收合後的環境版本總覽](docs/overview.png)
 
 | 分類 | 收合時顯示什麼 |
 |---|---|
@@ -178,8 +172,6 @@ npm run dev          # 然後開 http://127.0.0.1:5173/preview.html
 
 右上角齒輪：**外觀**（自動／淺色／深色）與**語言**（繁體中文／简体中文／English）。設定存在 localStorage，下次開啟沿用；「自動」會跟隨 macOS 的深色模式。
 
-![深色模式 + English](docs/dark-en.png)
-
 介面全部三語；**上游套件說明**維持原文（多為英文），**讀取警告**也保留原始語言，因為內容常含指令的原始輸出。
 
 ## 匯出重建清單
@@ -298,7 +290,6 @@ src-tauri/
   src/export.rs          匯出重建清單（Brewfile / requirements / npm / gems / global.json / REBUILD.md）
   src/lib.rs             Tauri command：scan_local / check_updates / export_rebuild / reveal_in_finder
   tauri.conf.json        視窗 1240×820、透明標題列、CSP 只允許自身資源
-docs/screenshot.png      README 用截圖
 ```
 
 ## 已知限制（刻意的 MVP 範圍）

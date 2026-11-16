@@ -155,7 +155,6 @@ const zhTW: Dict = {
   "eco.deno.blurb": "執行環境",
   "eco.bun": "Bun",
   "eco.bun.blurb": "執行環境與全域套件",
-  "footer.absent": "未安裝：{list}",
 };
 
 const zhCN: Dict = {
@@ -305,7 +304,6 @@ const zhCN: Dict = {
   "eco.deno.blurb": "运行环境",
   "eco.bun": "Bun",
   "eco.bun.blurb": "运行环境与全局软件包",
-  "footer.absent": "未安装：{list}",
 };
 
 const en: Dict = {
@@ -455,7 +453,6 @@ const en: Dict = {
   "eco.deno.blurb": "runtime",
   "eco.bun": "Bun",
   "eco.bun.blurb": "runtime and global packages",
-  "footer.absent": "Not installed: {list}",
 };
 
 export const DICTS: Record<Lang, Dict> = {
