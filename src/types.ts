@@ -24,6 +24,7 @@ export interface Ecosystem {
   label: string;
   blurb: string;
   items: Item[];
+  available: boolean;
   checkable: boolean;
   headline: string | null;
   error: string | null;

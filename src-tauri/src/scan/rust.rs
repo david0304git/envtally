@@ -136,7 +136,7 @@ pub fn scan() -> Result<Part, String> {
     }
 
     if !found && part.items.is_empty() {
-        return Err(String::from("找不到 Rust toolchain"));
+        return Ok(Part::absent());
     }
     Ok(part)
 }

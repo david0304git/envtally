@@ -1,8 +1,12 @@
 pub mod brew;
+pub mod bun;
+pub mod deno;
+pub mod go;
 pub mod node;
 pub mod python;
 pub mod runtimes;
 pub mod rust;
+pub mod swift;
 pub mod system;
 pub mod upstream;
 pub mod updates;
@@ -17,6 +21,8 @@ pub struct Part {
     pub warnings: Vec<String>,
     /// 這個生態系的「環境版本」摘要（收合分類時要看的東西）
     pub headline: Option<String>,
+    /// 這台機器根本沒有這個環境 → 分類直接隱藏，不當成錯誤
+    pub missing: bool,
 }
 
 impl Part {
@@ -25,6 +31,17 @@ impl Part {
             items: Vec::new(),
             warnings: Vec::new(),
             headline: None,
+            missing: false,
+        }
+    }
+
+    /// 這台機器沒有這個環境（UI 會隱藏整個分類）
+    pub fn absent() -> Self {
+        Part {
+            items: Vec::new(),
+            warnings: Vec::new(),
+            headline: None,
+            missing: true,
         }
     }
 
@@ -99,6 +116,12 @@ pub fn origin_for(path: &str) -> &'static str {
         "macOS 內建"
     } else if path.starts_with("/Library/Frameworks/") {
         "python.org 安裝"
+    } else if path.contains("/.deno/") {
+        "Deno 安裝器"
+    } else if path.contains("/.bun/") {
+        "Bun 安裝器"
+    } else if path.starts_with("/usr/local/go/") || path.contains("/go/bin/") {
+        "Go 安裝器"
     } else if path.contains("/.nvm/") {
         "nvm"
     } else if path.starts_with("/usr/local/") {
@@ -119,6 +142,10 @@ fn specs() -> Vec<(&'static str, &'static str, &'static str, ScanFn, bool)> {
         ("dotnet", ".NET", "SDK 與執行階段", runtimes::dotnet, true),
         ("php", "PHP", "直譯器", runtimes::php, true),
         ("ruby", "Ruby", "直譯器與 gem", runtimes::ruby, true),
+        ("go", "Go", "工具鏈與 go install 執行檔", go::scan, false),
+        ("swift", "Swift", "Swift 工具鏈與 SDK", swift::scan, false),
+        ("deno", "Deno", "執行環境", deno::scan, false),
+        ("bun", "Bun", "執行環境與全域套件", bun::scan, false),
         ("system", "系統工具", "命令列工具版本", system::scan, false),
     ]
 }
@@ -196,6 +223,7 @@ pub fn collect() -> Inventory {
             label: label.to_string(),
             blurb: blurb.to_string(),
             items: Vec::new(),
+            available: true,
             checkable,
             headline: None,
             error: None,
@@ -207,6 +235,7 @@ pub fn collect() -> Inventory {
                 eco.items = part.items;
                 eco.warnings = part.warnings;
                 eco.headline = part.headline;
+                eco.available = !part.missing;
             }
             Err(err) => eco.error = Some(err),
         }
@@ -331,11 +360,12 @@ mod tests {
         let total: usize = inv.ecosystems.iter().map(|e| e.items.len()).sum();
         for eco in &inv.ecosystems {
             println!(
-                "{} ({}) -> {} 項, {} ms, error={:?}, warnings={:?}",
+                "{} ({}) -> {} 項, {} ms, available={}, error={:?}, warnings={:?}",
                 eco.label,
                 eco.id,
                 eco.items.len(),
                 eco.duration_ms,
+                eco.available,
                 eco.error,
                 eco.warnings
             );

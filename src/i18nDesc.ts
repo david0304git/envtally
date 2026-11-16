@@ -63,6 +63,41 @@ const BY_NAME: Record<string, Triple> = {
     "Ruby 解释器：macOS 内置版本，系统工具（如 CocoaPods）会用到",
     "Ruby interpreter: the macOS built-in, used by tools such as CocoaPods",
   ],
+  "go|runtime": [
+    "Go 編譯器與工具鏈：go build / test / run",
+    "Go 编译器与工具链：go build / test / run",
+    "Go compiler and toolchain: go build / test / run",
+  ],
+  "go|binary": [
+    "用 go install 安裝的執行檔",
+    "用 go install 安装的可执行文件",
+    "A binary installed with go install",
+  ],
+  "deno|runtime": [
+    "Deno 執行環境（TypeScript / JavaScript，預設沙箱權限）",
+    "Deno 运行环境（TypeScript / JavaScript，默认沙箱权限）",
+    "Deno runtime (TypeScript / JavaScript, sandboxed by default)",
+  ],
+  "bun|runtime": [
+    "Bun 執行環境（JavaScript / TypeScript，內建套件管理器與打包器）",
+    "Bun 运行环境（JavaScript / TypeScript，内置包管理器与打包器）",
+    "Bun runtime (JavaScript / TypeScript with built-in package manager and bundler)",
+  ],
+  "bun|package": [
+    "bun 全域安裝的套件",
+    "bun 全局安装的软件包",
+    "Installed globally with bun",
+  ],
+  "swift|toolchain": [
+    "Swift 編譯器與工具鏈：swift build / run / test（由 Xcode 或命令列工具提供）",
+    "Swift 编译器与工具链：swift build / run / test（由 Xcode 或命令行工具提供）",
+    "Swift compiler and toolchain (provided by Xcode or the command line tools)",
+  ],
+  "swift|sdk": [
+    "編譯時使用的 macOS SDK 版本",
+    "编译时使用的 macOS SDK 版本",
+    "The macOS SDK version used at compile time",
+  ],
   "system|git": ["版本控制系統", "版本控制系统", "Version control system"],
   "system|git-lfs": ["Git 的大檔案（LFS）擴充", "Git 的大文件（LFS）扩展", "Git extension for large files (LFS)"],
   "system|curl": ["命令列 HTTP/FTP 傳輸工具", "命令行 HTTP/FTP 传输工具", "Command-line HTTP/FTP transfer tool"],

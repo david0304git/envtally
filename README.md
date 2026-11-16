@@ -20,9 +20,13 @@
 | .NET | SDK 與執行階段 | `dotnet --list-sdks`、`dotnet --list-runtimes` |
 | PHP | 直譯器 | `php -v` |
 | Ruby | 直譯器與 gem（49 項） | `ruby -v`、`gem list --local` |
+| Go | 工具鏈版本 + `$GOPATH/bin` 的執行檔 | `go version`、`go env GOPATH`、`go version -m`（從 build info 取模組版本） |
+| Swift | Swift 工具鏈 + macOS SDK | `swift --version`、`xcrun --show-sdk-version`（注意跳過 swift-driver 的版本號） |
+| Deno | 執行環境（含內建 V8 / TypeScript 版本） | `deno --version` |
+| Bun | 執行環境 + 全域套件 | `bun --version`、讀 `~/.bun/install/global/node_modules/*/package.json` |
 | 系統工具 | git、curl、jq、ffmpeg、sqlite3 等 24 種命令列工具 | 各自跑 `--version`，取第一個版本號 |
 
-九個分類並行掃描，實測 **619 項 / 約 1 秒**。
+十三個分類並行掃描（沒安裝的自動隱藏），實測 **619 項 / 約 1 秒**。
 
 ### 左側分類選單
 
@@ -71,6 +75,16 @@
 - 點別的欄位 → 該欄**遞增**排序
 - 再點同一欄 → 切換成**遞減**（箭頭從 `↑` 變 `↓`，各欄位都有指示）
 - 「全部」檢視時，排序在每個分類內部各自套用
+
+### 沒安裝的分類會自動隱藏
+
+掃描器先確認工具在不在：不在就回傳「這台沒有」，前端**整個分類不顯示**，也不會變成警告。底部狀態列會註明：
+
+```
+未安裝：Go · Deno · Bun        10 個生態系
+```
+
+所以在只有 Python 的機器上，畫面就是乾淨的兩個分類（Python + 系統工具），不會出現一堆「找不到 X」。分類清單目前有 13 個（Homebrew / Python / Node.js / Rust / Java / .NET / PHP / Ruby / Go / Swift / Deno / Bun / 系統工具）。
 
 ### 版本狀態
 

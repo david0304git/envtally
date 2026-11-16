@@ -171,7 +171,7 @@ fn packages(exe: &str) -> Result<Vec<PipPackage>, String> {
 pub fn scan() -> Result<Part, String> {
     let interps = discover();
     if interps.is_empty() {
-        return Err(String::from("找不到任何 Python 直譯器"));
+        return Ok(Part::absent());
     }
 
     let default_canon = sh::which("python3").and_then(|p| std::fs::canonicalize(p).ok());

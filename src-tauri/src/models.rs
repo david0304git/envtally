@@ -86,6 +86,15 @@ impl Item {
         self
     }
 
+    /// 不需翻譯的純資料備註（例如「V8 13.0 · TypeScript 5.7」）。
+    pub fn note(mut self, text: impl Into<String>) -> Self {
+        let text = text.into();
+        if !text.trim().is_empty() {
+            self.note = Some(text.trim().to_string());
+        }
+        self
+    }
+
     /// 同時給 zh-TW 原文與 i18n key；前端在非中文語系時用 key 翻譯。
     pub fn note_i18n(mut self, zh_tw: &str, key: &str, args: &[&str]) -> Self {
         self.note = Some(zh_tw.to_string());
@@ -111,6 +120,8 @@ pub struct Ecosystem {
     pub label: String,
     pub blurb: String,
     pub items: Vec<Item>,
+    /// 這台機器有沒有這個環境（false 時前端直接隱藏，不顯示成錯誤）
+    pub available: bool,
     /// 這個分類有沒有「向上游比對版本」的能力（沒有就別顯示成「待檢查」）
     pub checkable: bool,
     /// 收合時顯示的環境版本摘要，例如 "3.13.6 · 3.14.7"（不含套件版本）

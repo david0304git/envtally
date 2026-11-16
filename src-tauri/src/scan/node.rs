@@ -168,7 +168,7 @@ pub fn scan() -> Result<Part, String> {
     }
 
     if !found_anything && part.items.is_empty() {
-        return Err(String::from("找不到 Node.js（沒有 nvm 目錄也沒有 node）"));
+        return Ok(Part::absent());
     }
     Ok(part)
 }

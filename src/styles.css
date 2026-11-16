@@ -1117,6 +1117,13 @@ button {
   font-size: 10.5px;
 }
 
+.footer-absent {
+  color: var(--faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40%;
+}
+
 .footer-busy {
   color: var(--amber);
 }

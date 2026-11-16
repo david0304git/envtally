@@ -147,6 +147,15 @@ const zhTW: Dict = {
   "note.ruby.builtin": "macOS 內建；要新版請用 brew install ruby，不要直接替換系統 Ruby",
   "note.gem.default": "Ruby 內建 default gem（更新通常需要 sudo，不建議動）",
   "note.python.prefix": "prefix：{0}",
+  "eco.go": "Go",
+  "eco.go.blurb": "工具鏈與 go install 執行檔",
+  "eco.swift": "Swift",
+  "eco.swift.blurb": "Swift 工具鏈與 SDK",
+  "eco.deno": "Deno",
+  "eco.deno.blurb": "執行環境",
+  "eco.bun": "Bun",
+  "eco.bun.blurb": "執行環境與全域套件",
+  "footer.absent": "未安裝：{list}",
 };
 
 const zhCN: Dict = {
@@ -288,6 +297,15 @@ const zhCN: Dict = {
   "note.ruby.builtin": "macOS 内置；要新版本请用 brew install ruby，不要直接替换系统 Ruby",
   "note.gem.default": "Ruby 内置 default gem（更新通常需要 sudo，不建议动）",
   "note.python.prefix": "prefix：{0}",
+  "eco.go": "Go",
+  "eco.go.blurb": "工具链与 go install 可执行文件",
+  "eco.swift": "Swift",
+  "eco.swift.blurb": "Swift 工具链与 SDK",
+  "eco.deno": "Deno",
+  "eco.deno.blurb": "运行环境",
+  "eco.bun": "Bun",
+  "eco.bun.blurb": "运行环境与全局软件包",
+  "footer.absent": "未安装：{list}",
 };
 
 const en: Dict = {
@@ -429,6 +447,15 @@ const en: Dict = {
   "note.ruby.builtin": "macOS built-in; get a newer one with brew install ruby instead of replacing the system Ruby",
   "note.gem.default": "Ruby default gem (updating usually needs sudo; best left alone)",
   "note.python.prefix": "prefix: {0}",
+  "eco.go": "Go",
+  "eco.go.blurb": "toolchain and go install binaries",
+  "eco.swift": "Swift",
+  "eco.swift.blurb": "Swift toolchain and SDK",
+  "eco.deno": "Deno",
+  "eco.deno.blurb": "runtime",
+  "eco.bun": "Bun",
+  "eco.bun.blurb": "runtime and global packages",
+  "footer.absent": "Not installed: {list}",
 };
 
 export const DICTS: Record<Lang, Dict> = {

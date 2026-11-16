@@ -238,7 +238,7 @@ fn reconcile_missing(prefix: &str, part: &mut Part) {
 
 pub fn scan() -> Result<Part, String> {
     if !sh::exists("brew") {
-        return Err(String::from("找不到 brew（Homebrew 未安裝或不在可搜尋的路徑）"));
+        return Ok(Part::absent());
     }
 
     let mut part = Part::new();

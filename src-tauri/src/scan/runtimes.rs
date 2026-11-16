@@ -87,14 +87,14 @@ pub fn java() -> Result<Part, String> {
     }
 
     if part.items.is_empty() {
-        return Err(String::from("找不到 Java（沒有 JDK）"));
+        return Ok(Part::absent());
     }
     Ok(part)
 }
 
 pub fn dotnet() -> Result<Part, String> {
     if !sh::exists("dotnet") {
-        return Err(String::from("找不到 dotnet（.NET 未安裝）"));
+        return Ok(Part::absent());
     }
 
     let mut part = Part::new();
@@ -166,7 +166,7 @@ pub fn dotnet() -> Result<Part, String> {
 
 pub fn php() -> Result<Part, String> {
     let Some(path) = sh::which("php") else {
-        return Err(String::from("找不到 php"));
+        return Ok(Part::absent());
     };
     let path_str = path.display().to_string();
     let mut part = Part::new();
@@ -222,7 +222,7 @@ Gem::Specification.each { |s| puts s.name + "\t" + s.summary.to_s.gsub(/\s+/, " 
 
 pub fn ruby() -> Result<Part, String> {
     let Some(path) = sh::which("ruby") else {
-        return Err(String::from("找不到 ruby"));
+        return Ok(Part::absent());
     };
     let path_str = path.display().to_string();
     let origin = origin_for(&path_str);

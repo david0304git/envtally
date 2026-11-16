@@ -67,7 +67,7 @@ pub fn scan() -> Result<Part, String> {
     }
 
     if part.items.is_empty() {
-        return Err(String::from("找不到任何已知的命令列工具"));
+        return Ok(Part::absent());
     }
     Ok(part)
 }

@@ -160,7 +160,18 @@ function Workspace() {
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [settingsOpen]);
 
-  const ecosystems = inventory?.ecosystems ?? [];
+  const allEcosystems = inventory?.ecosystems ?? [];
+  const ecosystems = useMemo(
+    () => allEcosystems.filter((eco) => eco.available),
+    [allEcosystems],
+  );
+  const absentNames = useMemo(
+    () =>
+      allEcosystems
+        .filter((eco) => !eco.available)
+        .map((eco) => ecoLabel(eco.id, eco.label, t)),
+    [allEcosystems, t],
+  );
 
   const scopeOrder = useMemo(
     () => [ALL_SCOPE, ...ecosystems.map((eco) => eco.id)],
@@ -538,6 +549,9 @@ function Workspace() {
           <span className="mono">
             {t("footer.scanAt", { time: formatTime(inventory.scannedAtMs, lang) })}
           </span>
+        )}
+        {absentNames.length > 0 && (
+          <span className="footer-absent">{t("footer.absent", { list: absentNames.join(" · ") })}</span>
         )}
         <span className="mono">{t("footer.ecosystems", { n: ecosystems.length })}</span>
       </footer>
