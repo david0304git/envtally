@@ -1,5 +1,5 @@
 use crate::models::Item;
-use crate::scan::{first_line, pick_version, Part};
+use crate::scan::{first_line, pick_version, version_key, Part};
 use crate::sh;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
@@ -53,6 +53,8 @@ pub fn scan() -> Result<Part, String> {
     }
     versions.sort_by(|a, b| b.0.cmp(&a.0));
 
+    let mut ordered: Vec<(bool, String)> = Vec::new();
+
     for (_, dir_name, path) in versions {
         found_anything = true;
         let version = dir_name.trim_start_matches('v').to_string();
@@ -70,6 +72,7 @@ pub fn scan() -> Result<Part, String> {
         if is_active {
             item = item.note("目前 PATH 使用中");
         }
+        ordered.push((is_active, version.clone()));
         part.items.push(item);
     }
 
@@ -86,6 +89,7 @@ pub fn scan() -> Result<Part, String> {
                         )
                         .about("JavaScript 執行環境"),
                 );
+                ordered.push((true, version));
                 found_anything = true;
             }
         }
@@ -104,6 +108,20 @@ pub fn scan() -> Result<Part, String> {
                     .about("Node.js 的套件管理器本體（全域安裝都用它）"),
             );
         }
+    }
+
+    ordered.sort_by(|a, b| {
+        b.0.cmp(&a.0)
+            .then_with(|| version_key(&b.1).cmp(&version_key(&a.1)))
+    });
+    if !ordered.is_empty() {
+        part.headline = Some(
+            ordered
+                .iter()
+                .map(|(_, version)| version.clone())
+                .collect::<Vec<_>>()
+                .join(" · "),
+        );
     }
 
     let global_root = npm_global_root();

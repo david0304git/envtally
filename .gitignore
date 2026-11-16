@@ -17,3 +17,6 @@ shot-*.png
 
 # tauri-build 產生的 ACL schema
 src-tauri/gen/
+
+# 除錯截圖
+s-*.png

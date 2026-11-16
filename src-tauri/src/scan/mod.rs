@@ -14,6 +14,8 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 pub struct Part {
     pub items: Vec<Item>,
     pub warnings: Vec<String>,
+    /// 這個生態系的「環境版本」摘要（收合分類時要看的東西）
+    pub headline: Option<String>,
 }
 
 impl Part {
@@ -21,6 +23,7 @@ impl Part {
         Part {
             items: Vec::new(),
             warnings: Vec::new(),
+            headline: None,
         }
     }
 
@@ -42,6 +45,27 @@ pub fn now_ms() -> u64 {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_millis() as u64)
         .unwrap_or(0)
+}
+
+/// 把版本號拆成可比較的數字序列（"3.14.7" -> [3, 14, 7]）。
+pub fn version_key(version: &str) -> Vec<u64> {
+    version
+        .trim_start_matches('v')
+        .split(|c: char| !c.is_ascii_digit())
+        .filter_map(|part| part.parse::<u64>().ok())
+        .collect()
+}
+
+/// 把環境版本一段一段疊到 headline 上（多個語言共用一個分類時用）。
+pub fn add_headline(part: &mut Part, text: impl Into<String>) {
+    let text = text.into();
+    match &mut part.headline {
+        Some(existing) => {
+            existing.push_str(" · ");
+            existing.push_str(&text);
+        }
+        None => part.headline = Some(text),
+    }
 }
 
 pub fn first_line(text: &str) -> String {
@@ -181,6 +205,7 @@ pub fn collect() -> Inventory {
             blurb: blurb.to_string(),
             items: Vec::new(),
             checkable,
+            headline: None,
             error: None,
             warnings: Vec::new(),
             duration_ms,
@@ -189,6 +214,7 @@ pub fn collect() -> Inventory {
             Ok(part) => {
                 eco.items = part.items;
                 eco.warnings = part.warnings;
+                eco.headline = part.headline;
             }
             Err(err) => eco.error = Some(err),
         }

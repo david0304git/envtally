@@ -18,8 +18,11 @@ export type ViewRow =
       id: string;
       label: string;
       blurb: string;
+      /// 收合時要看的環境版本（例如 "3.14.7 · 3.13.6"）
+      headline: string | null;
       count: number;
       outdated: number;
+      collapsed: boolean;
     }
   | { type: "item"; row: Row };
 
@@ -106,6 +109,8 @@ export function buildView(
   ecosystems: Ecosystem[],
   grouped: boolean,
   sort: SortKey,
+  collapsedGroups: ReadonlySet<string>,
+  forceExpand: boolean,
 ): ViewRow[] {
   if (!grouped) {
     return [...rows]
@@ -118,14 +123,18 @@ export function buildView(
     const group = rows.filter((row) => row.ecosystem === eco.id);
     if (group.length === 0) continue;
     group.sort((a, b) => compareRows(a, b, sort));
+    const collapsed = !forceExpand && collapsedGroups.has(eco.id);
     view.push({
       type: "group",
       id: eco.id,
       label: eco.label,
       blurb: eco.blurb,
+      headline: eco.headline,
       count: group.length,
       outdated: group.filter((row) => row.statusResolved === "outdated").length,
+      collapsed,
     });
+    if (collapsed) continue;
     for (const row of group) view.push({ type: "item", row });
   }
   return view;

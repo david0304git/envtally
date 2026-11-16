@@ -1,5 +1,5 @@
 use crate::models::Item;
-use crate::scan::{first_line, Part};
+use crate::scan::{first_line, version_key, Part};
 use crate::sh;
 use serde::Deserialize;
 use std::path::PathBuf;
@@ -174,8 +174,15 @@ pub fn scan() -> Result<Part, String> {
         return Err(String::from("找不到任何 Python 直譯器"));
     }
 
+    let default_canon = sh::which("python3").and_then(|p| std::fs::canonicalize(p).ok());
     let mut part = Part::new();
+    let mut versions: Vec<(bool, String)> = Vec::new();
+
     for interp in interps {
+        let canon = std::fs::canonicalize(&interp.path).unwrap_or_else(|_| interp.path.clone());
+        let is_default = default_canon.as_ref().map(|d| *d == canon).unwrap_or(false);
+        versions.push((is_default, interp.version.clone()));
+
         part.items.push(
             Item::new("python", &interp.source, "Python", &interp.version)
                 .kind("runtime")
@@ -204,6 +211,21 @@ pub fn scan() -> Result<Part, String> {
             }
             Err(e) => part.warn(format!("{} 讀不到套件清單：{e}", interp.source)),
         }
+    }
+
+    // PATH 上的預設直譯器排第一，其餘由新到舊
+    versions.sort_by(|a, b| {
+        b.0.cmp(&a.0)
+            .then_with(|| version_key(&b.1).cmp(&version_key(&a.1)))
+    });
+    if !versions.is_empty() {
+        part.headline = Some(
+            versions
+                .iter()
+                .map(|(_, version)| version.clone())
+                .collect::<Vec<_>>()
+                .join(" · "),
+        );
     }
 
     Ok(part)

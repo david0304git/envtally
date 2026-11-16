@@ -31,6 +31,7 @@ export default function App() {
   const [sort, setSort] = useState<SortKey>("name");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showWarnings, setShowWarnings] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -150,10 +151,40 @@ export default function App() {
     return rows;
   }, [allRows, scope, query, filter]);
 
+  // 有搜尋或篩選時強制展開，否則命中結果會藏在收合的分類裡
+  const forceExpand = query.trim() !== "" || filter !== "all";
+
   const view = useMemo(
-    () => buildView(visibleRows, ecosystems, scope === ALL_SCOPE, sort),
-    [visibleRows, ecosystems, scope, sort],
+    () =>
+      buildView(
+        visibleRows,
+        ecosystems,
+        scope === ALL_SCOPE,
+        sort,
+        collapsedGroups,
+        forceExpand,
+      ),
+    [visibleRows, ecosystems, scope, sort, collapsedGroups, forceExpand],
   );
+
+  const toggleGroup = useCallback((id: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const allGroupsCollapsed =
+    ecosystems.length > 0 && ecosystems.every((eco) => collapsedGroups.has(eco.id));
+
+  const toggleAllGroups = useCallback(() => {
+    setCollapsedGroups((prev) => {
+      const every = ecosystems.length > 0 && ecosystems.every((eco) => prev.has(eco.id));
+      return every ? new Set<string>() : new Set(ecosystems.map((eco) => eco.id));
+    });
+  }, [ecosystems]);
 
   const selected = useMemo<Row | null>(
     () => allRows.find((row) => row.id === selectedId) ?? null,
@@ -229,6 +260,8 @@ export default function App() {
             shown={visibleRows.length}
             total={scopeTotal}
             checkedAt={updates?.checkedAtMs ?? null}
+            onToggleGroups={scope === ALL_SCOPE ? toggleAllGroups : null}
+            allGroupsCollapsed={allGroupsCollapsed}
           />
 
           {warnings.length > 0 && (
@@ -254,6 +287,7 @@ export default function App() {
             view={view}
             selectedId={selectedId}
             onSelect={setSelectedId}
+            onToggleGroup={toggleGroup}
             scanning={scanning}
             hasInventory={inventory !== null}
             emptyHint={query.trim() || filter !== "all" ? "沒有符合條件的項目" : "這個分類目前是空的"}

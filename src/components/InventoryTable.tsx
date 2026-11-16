@@ -6,6 +6,7 @@ interface Props {
   view: ViewRow[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onToggleGroup: (id: string) => void;
   scanning: boolean;
   hasInventory: boolean;
   emptyHint: string;
@@ -15,6 +16,7 @@ export default function InventoryTable({
   view,
   selectedId,
   onSelect,
+  onToggleGroup,
   scanning,
   hasInventory,
   emptyHint,
@@ -60,12 +62,41 @@ export default function InventoryTable({
       {view.map((entry) => {
         if (entry.type === "group") {
           return (
-            <div className="group-row" key={`group-${entry.id}`}>
+            <button
+              key={`group-${entry.id}`}
+              type="button"
+              className="group-row"
+              onClick={() => onToggleGroup(entry.id)}
+              aria-expanded={!entry.collapsed}
+              title={entry.blurb}
+            >
+              <svg
+                className={`group-caret ${entry.collapsed ? "" : "is-open"}`}
+                width="10"
+                height="10"
+                viewBox="0 0 10 10"
+                aria-hidden="true"
+              >
+                <path
+                  d="M3 1.8 L7 5 L3 8.2"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
               <span className="group-label">{entry.label}</span>
-              <span className="group-count">{entry.count}</span>
-              {entry.outdated > 0 && <span className="group-warn">{entry.outdated} 需更新</span>}
-              <span className="group-blurb">{entry.blurb}</span>
-            </div>
+              {entry.headline ? (
+                <span className="group-version">{entry.headline}</span>
+              ) : (
+                <span className="group-blurb">{entry.blurb}</span>
+              )}
+              <span className="group-flags">
+                {entry.outdated > 0 && <span className="group-warn">{entry.outdated} 需更新</span>}
+              </span>
+              <span className="group-count">{entry.count} 項</span>
+            </button>
           );
         }
 

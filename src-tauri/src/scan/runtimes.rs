@@ -1,5 +1,5 @@
 use crate::models::Item;
-use crate::scan::{first_line, origin_for, pick_version, Part};
+use crate::scan::{add_headline, first_line, origin_for, pick_version, Part};
 use crate::sh;
 use std::collections::HashMap;
 use std::time::Duration;
@@ -77,6 +77,10 @@ fn java(part: &mut Part) {
                 .map(|s| s.trim().to_string())
                 .filter(|s| s.starts_with('/'));
 
+            if !found {
+                add_headline(part, format!("Java {version}"));
+            }
+
             let mut item = Item::new(
                 "runtimes",
                 vendor.as_deref().unwrap_or("Java"),
@@ -100,11 +104,14 @@ fn java(part: &mut Part) {
     if !found {
         match sh::run("java", &["-version"], Duration::from_secs(20)) {
             Ok(out) => match pick_version(out.text()) {
-                Some(version) => part.items.push(
-                    Item::new("runtimes", "Java", "Java", &version)
-                        .kind("runtime")
-                        .about("Java 執行環境（JDK）"),
-                ),
+                Some(version) => {
+                    add_headline(part, format!("Java {version}"));
+                    part.items.push(
+                        Item::new("runtimes", "Java", "Java", &version)
+                            .kind("runtime")
+                            .about("Java 執行環境（JDK）"),
+                    );
+                }
                 None => part.warn(format!("java -version 輸出無法解析：{}", first_line(out.text()))),
             },
             Err(e) => part.warn(format!("Java 讀取失敗：{e}")),
@@ -117,6 +124,7 @@ fn dotnet(part: &mut Part) {
         return;
     }
 
+    let mut sdk_headlined = false;
     if let Ok(out) = sh::run("dotnet", &["--list-sdks"], Duration::from_secs(60)) {
         for line in out.stdout.lines() {
             // 9.0.304 [/usr/local/share/dotnet/sdk]
@@ -137,6 +145,10 @@ fn dotnet(part: &mut Part) {
                 .trim_start_matches('[')
                 .trim_end_matches(']')
                 .to_string();
+            if !sdk_headlined {
+                add_headline(part, format!(".NET {version}"));
+                sdk_headlined = true;
+            }
             part.items.push(
                 Item::new("runtimes", ".NET SDK", ".NET SDK", version)
                     .kind("sdk")
@@ -182,6 +194,7 @@ fn php(part: &mut Part) {
     match sh::run("php", &["-v"], Duration::from_secs(20)) {
         Ok(out) => match pick_version(out.text()) {
             Some(version) => {
+                add_headline(part, format!("PHP {version}"));
                 let origin = origin_for(&path_str);
                 let mut item = Item::new("runtimes", origin, "PHP", &version)
                     .kind("runtime")
@@ -212,6 +225,7 @@ fn ruby(part: &mut Part) {
             version = rest.split_whitespace().next().unwrap_or("未知").to_string();
         }
     }
+    add_headline(part, format!("Ruby {version}"));
     part.items.push(
         Item::new("runtimes", origin, "Ruby", &version)
             .kind("runtime")

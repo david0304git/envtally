@@ -12,6 +12,9 @@ interface Props {
   shown: number;
   total: number;
   checkedAt: number | null;
+  /// 只有「全部」檢視才顯示收合控制；其他檢視傳 null
+  onToggleGroups: (() => void) | null;
+  allGroupsCollapsed: boolean;
 }
 
 const FILTERS: Array<{ id: StatusFilter; label: string }> = [
@@ -32,6 +35,8 @@ export default function Toolbar({
   shown,
   total,
   checkedAt,
+  onToggleGroups,
+  allGroupsCollapsed,
 }: Props) {
   return (
     <div className="sheet-toolbar">
@@ -67,6 +72,12 @@ export default function Toolbar({
           </button>
         ))}
       </div>
+
+      {onToggleGroups && (
+        <button type="button" className="btn btn--ghost" onClick={onToggleGroups}>
+          {allGroupsCollapsed ? "展開全部分類" : "收合全部分類"}
+        </button>
+      )}
 
       <select
         className="select"

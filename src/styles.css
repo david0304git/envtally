@@ -150,6 +150,20 @@ button {
   color: #f3f5f0;
 }
 
+.btn--ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11.5px;
+  padding: 0 8px;
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: var(--rail-hover);
+  color: var(--ink);
+  border-color: transparent;
+}
+
 .btn--tiny {
   height: 22px;
   padding: 0 8px;
@@ -636,39 +650,80 @@ button {
   background: var(--red);
 }
 
+/* 分類列：整列可點擊收合，右邊直接給這組的環境版本（不看子套件也看得到） */
 .group-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 12px 14px 5px;
+  display: grid;
+  grid-template-columns: 18px auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 31px;
+  padding: 0 14px;
   background: #fbfcf8;
   border-bottom: 1px solid var(--hair);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: background 120ms ease;
+}
+
+.group-row:hover {
+  background: #f4f6ef;
+}
+
+.group-caret {
+  color: var(--muted);
+  transition: transform 140ms ease;
+}
+
+.group-caret.is-open {
+  transform: rotate(90deg);
 }
 
 .group-label {
   font-size: 12px;
   font-weight: 600;
   color: var(--ink);
+  white-space: nowrap;
+}
+
+.group-version {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.group-blurb {
+  font-size: 10.5px;
+  color: var(--faint);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .group-count {
   font-family: var(--mono);
   font-size: 10.5px;
   color: var(--muted);
+  text-align: right;
+}
+
+.group-flags {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .group-warn {
-  font-size: 10px;
-  padding: 0 4px;
+  font-size: 9.5px;
+  padding: 1px 5px;
   border-radius: 3px;
   background: var(--amber-bg);
   color: var(--amber);
-}
-
-.group-blurb {
-  margin-left: auto;
-  font-size: 10.5px;
-  color: var(--faint);
+  white-space: nowrap;
 }
 
 .inv-empty {

@@ -23,6 +23,7 @@ export interface Ecosystem {
   blurb: string;
   items: Item[];
   checkable: boolean;
+  headline: string | null;
   error: string | null;
   warnings: string[];
   durationMs: number;

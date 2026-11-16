@@ -247,6 +247,7 @@ pub fn scan() -> Result<Part, String> {
                     .at(format!("{prefix}/bin/brew"))
                     .about("macOS 的套件管理器（本次清單的來源）"),
             );
+            part.headline = Some(version);
         }
     }
 

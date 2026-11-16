@@ -1,5 +1,5 @@
 use crate::models::Item;
-use crate::scan::{first_line, pick_version, Part};
+use crate::scan::{first_line, pick_version, version_key, Part};
 use crate::sh;
 use std::time::Duration;
 
@@ -25,6 +25,7 @@ pub fn scan() -> Result<Part, String> {
     .map(|r| r.text().to_string())
     .unwrap_or_default();
 
+    let mut ordered: Vec<(bool, String)> = Vec::new();
     let toolchains_dir = format!("{}/toolchains", rustup_home());
     if let Ok(entries) = std::fs::read_dir(&toolchains_dir) {
         let mut dirs: Vec<_> = entries.flatten().collect();
@@ -44,13 +45,16 @@ pub fn scan() -> Result<Part, String> {
             } else {
                 String::from("未知")
             };
+            let is_default = active.starts_with(&name);
+            ordered.push((is_default, version.clone()));
+
             let mut item = Item::new("rust", "rustup", &name, &version)
                 .kind("toolchain")
                 .at(entry.path().display().to_string())
                 .about("Rust 編譯器與工具鏈（rustc / cargo / rustup），一個 toolchain 就是一套完整版本")
                 .cmd(format!("rustup update {name}"))
                 .rm(format!("rustup toolchain uninstall {name}"));
-            if active.starts_with(&name) {
+            if is_default {
                 item = item.note("預設 toolchain");
             }
             part.items.push(item);
@@ -70,6 +74,20 @@ pub fn scan() -> Result<Part, String> {
                 found = true;
             }
         }
+    }
+
+    ordered.sort_by(|a, b| {
+        b.0.cmp(&a.0)
+            .then_with(|| version_key(&b.1).cmp(&version_key(&a.1)))
+    });
+    if !ordered.is_empty() {
+        part.headline = Some(
+            ordered
+                .iter()
+                .map(|(_, version)| version.clone())
+                .collect::<Vec<_>>()
+                .join(" · "),
+        );
     }
 
     // cargo install 裝的執行檔

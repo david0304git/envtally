@@ -76,6 +76,16 @@ async function bootstrap() {
     }, 400);
   }
 
+  // ?collapsed=1 自動按下「收合全部分類」，看環境版本總覽
+  if (params.get("collapsed") === "1") {
+    window.setTimeout(() => {
+      const button = Array.from(document.querySelectorAll("button")).find((element) =>
+        element.textContent?.includes("收合全部分類"),
+      );
+      button?.click();
+    }, 500);
+  }
+
   // ?selected=1 自動選第一列；?select=<名稱> 選指定那一列，方便看細節抽屜
   const wantedSelect = params.get("select");
   if (params.get("selected") === "1" || wantedSelect) {
