@@ -81,9 +81,24 @@
 | 還沒比對上游版本（按「檢查更新」） | 這個分類可以比對，但你還沒按過（或上次那個來源查詢失敗） |
 | 已是最新 | 問過了，沒有新版 |
 | 可更新至 X | 問過了，上游有 X（琥珀色） |
-| 不檢查這個分類的版本 | 語言執行環境、系統工具沒有做線上比對，這行不會變 |
+| 不檢查這個分類的版本 | 只有 `系統工具`（git/ffmpeg 這類）沒有上游版本可對，這行不會變 |
 
-只有 **Homebrew、Python、Node.js、Rust** 四個分類有線上比對（`brew outdated --json=v2`、`pip list --outdated`、`npm outdated -g --json`、`rustup check`）；**Java、.NET、PHP、Ruby、系統工具**只列本機版本，不會打線上，所以那幾類永遠顯示「不檢查這個分類的版本」。
+### 線上比對來源
+
+八個分類都會去問上游（只有 `系統工具` 不比對）：
+
+| 分類 | 來源 | 比對邏輯 |
+|---|---|---|
+| Homebrew | `brew outdated --json=v2` | 整個 Cellar |
+| Python | `pip list --outdated --format=json` | 每個直譯器各自的套件 |
+| Node.js | `npm outdated -g --json` | 全域套件 |
+| Rust | `rustup check` | toolchain |
+| Java | `api.adoptium.net/v3/assets/latest/{major}/hotspot` | **只比同一個 feature 版本的最新修補版**（不會叫你跳大版）；基準是 Adoptium Temurin |
+| .NET | `dotnetcli.blob.core.windows.net/.../releases-index.json` | 同 channel 的 `latest-sdk` 與 `latest-runtime`，並回報 **EOL** |
+| PHP | `formulae.brew.sh/api/formula/php.json` | Homebrew 官方 formula 的 stable 版 |
+| Ruby | `api.github.com/repos/ruby/ruby/releases/latest` | 官方最新 release tag |
+
+全部用系統內建的 `curl` 抓（沒有額外 TLS/HTTP 相依），逾時 25 秒，抓不到只會在警告列出現一行，不會讓整個檢查失敗。
 
 表格用顏色表示同一件事：**琥珀色**＝有新版、灰綠小點＝已最新、空心灰點＝還沒比對。**pip 有 300 多個套件，檢查可能要幾十秒到一兩分鐘**，所以做成按鈕而不是開場自動跑。
 

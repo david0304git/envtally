@@ -7,7 +7,7 @@
  */
 import { createRoot } from "react-dom/client";
 import "./styles.css";
-import type { Inventory, Patch, Updates } from "./types";
+import type { Inventory, Updates } from "./types";
 
 type Invoke = (command: string) => Promise<unknown>;
 
@@ -39,17 +39,19 @@ async function bootstrap() {
   }
   const inventory = (await response.json()) as Inventory;
 
-  const patches: Patch[] = [];
-  for (const eco of inventory.ecosystems) {
-    for (const item of eco.items.slice(0, 3)) {
-      patches.push({ key: item.key, latest: bumpVersion(item.version) });
-    }
-  }
+  // 有 public/preview-updates.json 就用真實檢查結果，否則退回「前 3 筆 +1」的假資料
+  const realUpdates = await fetch("/preview-updates.json")
+    .then((response) => (response.ok ? (response.json() as Promise<Updates>) : null))
+    .catch(() => null);
 
-  const updates: Updates = {
+  const updates: Updates = realUpdates ?? {
     checkedAtMs: Date.now(),
-    checkedEcosystems: inventory.ecosystems.map((eco) => eco.id),
-    patches,
+    checkedEcosystems: inventory.ecosystems
+      .filter((eco) => eco.checkable)
+      .map((eco) => eco.id),
+    patches: inventory.ecosystems.flatMap((eco) =>
+      eco.items.slice(0, 3).map((item) => ({ key: item.key, latest: bumpVersion(item.version) })),
+    ),
     warnings: [],
   };
 

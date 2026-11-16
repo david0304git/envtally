@@ -4,6 +4,7 @@ pub mod python;
 pub mod runtimes;
 pub mod rust;
 pub mod system;
+pub mod upstream;
 pub mod updates;
 
 use crate::models::{Ecosystem, Inventory, Item};
@@ -114,10 +115,10 @@ fn specs() -> Vec<(&'static str, &'static str, &'static str, ScanFn, bool)> {
         ("python", "Python", "pip 套件與直譯器", python::scan, true),
         ("node", "Node.js", "nvm 版本與全域 npm", node::scan, true),
         ("rust", "Rust", "rustup toolchain 與 cargo bin", rust::scan, true),
-        ("java", "Java", "JDK 執行環境", runtimes::java, false),
-        ("dotnet", ".NET", "SDK 與執行階段", runtimes::dotnet, false),
-        ("php", "PHP", "直譯器", runtimes::php, false),
-        ("ruby", "Ruby", "直譯器與 gem", runtimes::ruby, false),
+        ("java", "Java", "JDK 執行環境", runtimes::java, true),
+        ("dotnet", ".NET", "SDK 與執行階段", runtimes::dotnet, true),
+        ("php", "PHP", "直譯器", runtimes::php, true),
+        ("ruby", "Ruby", "直譯器與 gem", runtimes::ruby, true),
         ("system", "系統工具", "命令列工具版本", system::scan, false),
     ]
 }
@@ -265,8 +266,17 @@ mod tests {
         let updates = updates::check();
         println!("檢查成功的生態系: {:?}", updates.checked_ecosystems);
         println!("可更新項目: {}", updates.patches.len());
-        for patch in updates.patches.iter().take(6) {
-            println!("  {} -> {}", patch.key, patch.latest);
+        for patch in updates.patches.iter().take(4) {
+            println!("  樣本 {} -> {}", patch.key, patch.latest);
+        }
+        for ecosystem in ["java", "dotnet", "php", "ruby"] {
+            for patch in updates
+                .patches
+                .iter()
+                .filter(|patch| patch.key.starts_with(ecosystem))
+            {
+                println!("  [{ecosystem}] {} -> {}", patch.key, patch.latest);
+            }
         }
         for warning in &updates.warnings {
             println!("  警告: {warning}");
@@ -287,6 +297,20 @@ mod tests {
     }
 
     /// 需要真實本機環境，平常不跑：cargo test -- --ignored
+    #[test]
+    #[ignore = "產生預覽資料（會連網）"]
+    fn dump_updates_json() {
+        let updates = updates::check();
+        let json = serde_json::to_string(&updates).expect("序列化失敗");
+        let dir = std::path::Path::new("../public");
+        std::fs::create_dir_all(dir).expect("建立 public/ 失敗");
+        std::fs::write(dir.join("preview-updates.json"), json).expect("寫入失敗");
+        println!(
+            "寫出 public/preview-updates.json（{} 筆可更新）",
+            updates.patches.len()
+        );
+    }
+
     #[test]
     #[ignore = "需要本機環境"]
     fn real_scan_finds_items() {

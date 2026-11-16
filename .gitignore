@@ -12,6 +12,7 @@ src-tauri/target/
 
 # 由 cargo test -- --ignored dump_inventory_json 產生
 public/preview-inventory.json
+public/preview-updates.json
 .chrome-profile/
 shot-*.png
 

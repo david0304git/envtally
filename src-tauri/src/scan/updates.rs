@@ -1,5 +1,5 @@
 use crate::models::{Patch, Updates};
-use crate::scan::{first_line, now_ms, pick_version, python};
+use crate::scan::{first_line, now_ms, pick_version, python, runtimes, upstream, version_key};
 use crate::sh;
 use serde::Deserialize;
 use std::collections::BTreeMap;
@@ -59,6 +59,10 @@ pub fn check() -> Updates {
             scope.spawn(node),
             scope.spawn(python_check),
             scope.spawn(rustup),
+            scope.spawn(java),
+            scope.spawn(dotnet),
+            scope.spawn(php),
+            scope.spawn(ruby),
         ];
         handles
             .into_iter()
@@ -281,6 +285,219 @@ fn rustup() -> EcoCheck {
             check.ok = true;
         }
         Err(e) => check.warnings.push(format!("rustup check 失敗：{e}")),
+    }
+    check
+}
+
+/// 版本比較一律走 version_key（數字逐段比，字串不比）
+fn is_newer(latest: &str, installed: &str) -> bool {
+    !latest.is_empty() && version_key(latest) > version_key(installed)
+}
+
+/// Java：只比「同一個 feature 版本的最新修補版」，不會叫你跳大版。
+/// 基準是 Adoptium Temurin（Oracle JDK 與它共用上游 OpenJDK 版號）。
+fn java() -> EcoCheck {
+    let mut check = EcoCheck::new("java");
+    let Ok(part) = runtimes::java() else {
+        check.warnings.push(String::from("找不到 Java，跳過版本檢查"));
+        return check;
+    };
+    let Some(item) = part.items.iter().find(|item| item.kind == "runtime") else {
+        check.warnings.push(String::from("Java 項目不存在，跳過版本檢查"));
+        return check;
+    };
+
+    let installed = item.version.clone();
+    let key = item.key.clone();
+    let major = installed.split('.').next().unwrap_or_default().to_string();
+    if major.is_empty() {
+        check.warnings.push(String::from("Java 版本格式無法解析，跳過版本檢查"));
+        return check;
+    }
+
+    let url = format!(
+        "https://api.adoptium.net/v3/assets/latest/{major}/hotspot?os=mac&architecture=aarch64&image_type=jdk"
+    );
+    match upstream::get_json(&url) {
+        Ok(value) => {
+            let latest = value
+                .as_array()
+                .and_then(|assets| assets.first())
+                .and_then(|asset| asset.pointer("/version/openjdk_version"))
+                .and_then(|raw| raw.as_str())
+                .map(upstream::strip_build)
+                .filter(|text| !text.is_empty());
+
+            match latest {
+                Some(latest) => {
+                    if is_newer(&latest, &installed) {
+                        check.patches.push(Patch { key, latest });
+                    }
+                    check.ok = true;
+                }
+                None => check.warnings.push(format!(
+                    "Adoptium 沒有 Java {major} 的 macOS/arm64 建置，無法比對"
+                )),
+            }
+        }
+        Err(e) => check
+            .warnings
+            .push(format!("Java 版本查詢失敗（Adoptium）：{e}")),
+    }
+    check
+}
+
+/// .NET：用官方 releases-index 找同一個 channel，比 SDK 與執行階段。
+fn dotnet() -> EcoCheck {
+    let mut check = EcoCheck::new("dotnet");
+    let Ok(part) = runtimes::dotnet() else {
+        check.warnings.push(String::from("找不到 .NET，跳過版本檢查"));
+        return check;
+    };
+    let Some(sdk) = part.items.iter().find(|item| item.kind == "sdk") else {
+        check.warnings.push(String::from("找不到 .NET SDK，跳過版本檢查"));
+        return check;
+    };
+
+    let mut pieces = sdk.version.split('.');
+    let channel = format!(
+        "{}.{}",
+        pieces.next().unwrap_or_default(),
+        pieces.next().unwrap_or_default()
+    );
+    let sdk_key = sdk.key.clone();
+    let sdk_version = sdk.version.clone();
+
+    match upstream::get_json(
+        "https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/releases-index.json",
+    ) {
+        Ok(value) => {
+            let entry = value
+                .get("releases-index")
+                .and_then(|list| list.as_array())
+                .and_then(|list| {
+                    list.iter()
+                        .find(|row| row.get("channel-version").and_then(|v| v.as_str()) == Some(&channel))
+                });
+
+            let Some(entry) = entry else {
+                check
+                    .warnings
+                    .push(format!(".NET releases-index 找不到 {channel} channel"));
+                return check;
+            };
+
+            if let Some(latest_sdk) = entry.get("latest-sdk").and_then(|v| v.as_str()) {
+                if is_newer(latest_sdk, &sdk_version) {
+                    check.patches.push(Patch {
+                        key: sdk_key,
+                        latest: latest_sdk.to_string(),
+                    });
+                }
+            }
+
+            if let Some(latest_runtime) = entry.get("latest-runtime").and_then(|v| v.as_str()) {
+                for item in part.items.iter().filter(|item| item.kind == "runtime") {
+                    if is_newer(latest_runtime, &item.version) {
+                        check.patches.push(Patch {
+                            key: item.key.clone(),
+                            latest: latest_runtime.to_string(),
+                        });
+                    }
+                }
+            }
+
+            if entry.get("support-phase").and_then(|v| v.as_str()) == Some("eol") {
+                check.warnings.push(format!(".NET {channel} 已停止支援（EOL）"));
+            }
+            check.ok = true;
+        }
+        Err(e) => check
+            .warnings
+            .push(format!(".NET 版本查詢失敗（releases-index）：{e}")),
+    }
+    check
+}
+
+/// PHP：本機這個 PHP 是 Homebrew 裝的，所以直接比對 Homebrew 官方 formula 的 stable 版。
+fn php() -> EcoCheck {
+    let mut check = EcoCheck::new("php");
+    let Ok(part) = runtimes::php() else {
+        check.warnings.push(String::from("找不到 PHP，跳過版本檢查"));
+        return check;
+    };
+    let Some(item) = part.items.first() else {
+        check.warnings.push(String::from("PHP 項目不存在，跳過版本檢查"));
+        return check;
+    };
+
+    let installed = item.version.clone();
+    let key = item.key.clone();
+
+    match upstream::get_json("https://formulae.brew.sh/api/formula/php.json") {
+        Ok(value) => {
+            let latest = value
+                .pointer("/versions/stable")
+                .and_then(|v| v.as_str())
+                .map(str::to_string);
+
+            match latest {
+                Some(latest) => {
+                    if is_newer(&latest, &installed) {
+                        check.patches.push(Patch { key, latest });
+                    }
+                    check.ok = true;
+                }
+                None => check
+                    .warnings
+                    .push(String::from("Homebrew formula API 沒有回報 PHP 版本")),
+            }
+        }
+        Err(e) => check
+            .warnings
+            .push(format!("PHP 版本查詢失敗（Homebrew API）：{e}")),
+    }
+    check
+}
+
+/// Ruby：官方 repo 的最新 release tag（macOS 內建的 Ruby 版本很舊，這裡只是告知差距）。
+fn ruby() -> EcoCheck {
+    let mut check = EcoCheck::new("ruby");
+    let Ok(part) = runtimes::ruby() else {
+        check.warnings.push(String::from("找不到 Ruby，跳過版本檢查"));
+        return check;
+    };
+    let Some(item) = part.items.iter().find(|item| item.kind == "runtime") else {
+        check.warnings.push(String::from("Ruby 項目不存在，跳過版本檢查"));
+        return check;
+    };
+
+    let installed = item.version.clone();
+    let key = item.key.clone();
+
+    match upstream::get_json("https://api.github.com/repos/ruby/ruby/releases/latest") {
+        Ok(value) => {
+            let latest = value
+                .get("tag_name")
+                .and_then(|v| v.as_str())
+                .map(|tag| tag.trim_start_matches('v').replace('_', "."))
+                .filter(|text| !text.is_empty());
+
+            match latest {
+                Some(latest) => {
+                    if is_newer(&latest, &installed) {
+                        check.patches.push(Patch { key, latest });
+                    }
+                    check.ok = true;
+                }
+                None => check
+                    .warnings
+                    .push(String::from("GitHub release 沒有 tag_name")),
+            }
+        }
+        Err(e) => check
+            .warnings
+            .push(format!("Ruby 版本查詢失敗（GitHub API）：{e}")),
     }
     check
 }
