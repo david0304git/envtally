@@ -193,11 +193,24 @@ pub fn exists(program: &str) -> bool {
     which(program).is_some()
 }
 
+/// Windows：從 GUI 程式 spawn 主控台程式時，不指定這個旗標就會閃出黑色視窗。
+/// 一次掃描會跑幾十個指令，所以每個 spawn 都要套用。
+#[cfg(windows)]
+fn hide_console(command: &mut Command) {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    command.creation_flags(CREATE_NO_WINDOW);
+}
+
+#[cfg(not(windows))]
+fn hide_console(_command: &mut Command) {}
+
 /// 跑一條指令並抓輸出，逾時就砍掉（避免某個指令卡死整個掃描）。
 pub fn run(program: &str, args: &[&str], timeout: Duration) -> Result<CmdResult, String> {
     let exe = which(program).ok_or_else(|| format!("找不到指令 {program}"))?;
 
-    let child = Command::new(&exe)
+    let mut command = Command::new(&exe);
+    command
         .args(args)
         .env("PATH", path_string())
         .env("HOMEBREW_NO_AUTO_UPDATE", "1")
@@ -208,7 +221,10 @@ pub fn run(program: &str, args: &[&str], timeout: Duration) -> Result<CmdResult,
         .env("LANG", "en_US.UTF-8")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::piped());
+    hide_console(&mut command);
+
+    let child = command
         .spawn()
         .map_err(|e| format!("{program} 無法啟動：{e}"))?;
 
@@ -227,9 +243,10 @@ pub fn run(program: &str, args: &[&str], timeout: Duration) -> Result<CmdResult,
         Ok(Err(e)) => Err(format!("{program} 執行失敗：{e}")),
         Err(_) => {
             if cfg!(windows) {
-                let _ = Command::new("taskkill")
-                    .args(["/F", "/T", "/PID", &pid.to_string()])
-                    .output();
+                let mut kill = Command::new("taskkill");
+                kill.args(["/F", "/T", "/PID", &pid.to_string()]);
+                hide_console(&mut kill);
+                let _ = kill.output();
             } else {
                 let _ = Command::new("/bin/kill")
                     .args(["-9", &pid.to_string()])
