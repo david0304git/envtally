@@ -1,6 +1,4 @@
 import { useT } from "../i18nContext";
-import { formatTime } from "../rows";
-import { useSettings } from "../settings";
 import type { Inventory } from "../types";
 
 interface Props {
@@ -11,7 +9,6 @@ interface Props {
 
 export default function SpecPlate({ inventory, total, outdated }: Props) {
   const t = useT();
-  const { lang } = useSettings();
 
   return (
     <section className="plate" aria-label="machine">
@@ -41,12 +38,6 @@ export default function SpecPlate({ inventory, total, outdated }: Props) {
         <div className="ledger-cell">
           <dt>{t("plate.outdated")}</dt>
           <dd className={outdated > 0 ? "is-warn" : ""}>{outdated}</dd>
-        </div>
-        <div className="ledger-cell">
-          <dt>{t("plate.scan")}</dt>
-          <dd className="ledger-time">
-            {inventory ? formatTime(inventory.scannedAtMs, lang) : "—"}
-          </dd>
         </div>
       </dl>
     </section>

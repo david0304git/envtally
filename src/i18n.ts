@@ -36,7 +36,6 @@ const zhTW: Dict = {
   "plate.arch": "架構",
   "plate.items": "已盤點",
   "plate.outdated": "需更新",
-  "plate.scan": "掃描",
 
   "rail.all": "全部",
   "rail.filter": "篩選分類",
@@ -178,7 +177,6 @@ const zhCN: Dict = {
   "plate.arch": "架构",
   "plate.items": "已盘点",
   "plate.outdated": "需更新",
-  "plate.scan": "扫描",
 
   "rail.all": "全部",
   "rail.filter": "筛选分类",
@@ -320,7 +318,6 @@ const en: Dict = {
   "plate.arch": "Arch",
   "plate.items": "Items",
   "plate.outdated": "Outdated",
-  "plate.scan": "Scanned",
 
   "rail.all": "All",
   "rail.filter": "Filter categories",
