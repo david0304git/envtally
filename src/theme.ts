@@ -1,6 +1,6 @@
 export type ThemeMode = "auto" | "light" | "dark";
 
-const KEY = "version-manager.theme";
+const KEY = "envbench.theme";
 
 export function readThemeMode(): ThemeMode {
   try {
@@ -36,7 +36,7 @@ export function applyThemeMode(mode: ThemeMode): "light" | "dark" {
 // ── 語言 ──
 import type { Lang } from "./i18n";
 
-const LANG_KEY = "version-manager.lang";
+const LANG_KEY = "envbench.lang";
 
 export function readLang(): Lang {
   try {
