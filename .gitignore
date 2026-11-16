@@ -1,0 +1,19 @@
+node_modules/
+dist/
+src-tauri/target/
+
+# 開發期把快取留在專案內，避免寫到工作區外
+.cargo-home/
+.npm-cache/
+.icon-source.png
+
+.DS_Store
+*.log
+
+# 由 cargo test -- --ignored dump_inventory_json 產生
+public/preview-inventory.json
+.chrome-profile/
+shot-*.png
+
+# tauri-build 產生的 ACL schema
+src-tauri/gen/
