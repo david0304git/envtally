@@ -216,8 +216,15 @@ npm run dev          # 然後開 http://127.0.0.1:5173/preview.html
 
 ```
 GitHub → Actions → build → 最新的 run → Artifacts
-  envbench-windows  → .msi / .exe（NSIS）
-  envbench-macos    → .app / .dmg
+  envbench-windows  → msi/Envbench_0.1.0_x64_en-US.msi
+                      nsis/Envbench_0.1.0_x64-setup.exe
+  envbench-macos    → dmg/Envbench_0.1.0_aarch64.dmg
+```
+
+或用 CLI 下載：
+
+```bash
+gh run download --repo david0304git/envbench     # 最新一次，兩個平台都抓
 ```
 
 ### 平台差異

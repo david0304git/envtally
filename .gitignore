@@ -24,3 +24,7 @@ s-*.png
 
 # 驗證用（RUSTUP_HOME 指向可寫目錄）
 .rustup-verify/
+
+# CI 產物與 gh 快取
+.ci-artifacts/
+.gh-cache/
