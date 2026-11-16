@@ -78,7 +78,11 @@ pub fn scan() -> Result<Part, String> {
                             .kind("binary")
                             .at(path.clone())
                             .about("用 go install 安裝的執行檔")
-                            .rm(format!("rm \"{path}\"")),
+                            .rm(if cfg!(windows) {
+                                format!("del \"{path}\"")
+                            } else {
+                                format!("rm \"{path}\"")
+                            }),
                     );
                 }
             }

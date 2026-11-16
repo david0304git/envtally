@@ -136,7 +136,7 @@ const zhTW: Dict = {
 
   "export.done": "已匯出到 {path}",
   "export.failed": "匯出失敗：{message}",
-  "export.reveal": "在 Finder 顯示",
+  "export.reveal": "開啟資料夾",
   "export.tooltip": "產生 Brewfile / requirements.txt / npm-globals / global.json / REBUILD.md",
   "note.brew.multi": "另有 {0} 並存",
   "note.brew.unreported": "brew info 沒有回報此 formula（可能已停用或改名）",
@@ -286,7 +286,7 @@ const zhCN: Dict = {
 
   "export.done": "已导出到 {path}",
   "export.failed": "导出失败：{message}",
-  "export.reveal": "在 Finder 中显示",
+  "export.reveal": "打开文件夹",
   "export.tooltip": "生成 Brewfile / requirements.txt / npm-globals / global.json / REBUILD.md",
   "note.brew.multi": "另有 {0} 并存",
   "note.brew.unreported": "brew info 没有回报此 formula（可能已停用或改名）",
@@ -436,7 +436,7 @@ const en: Dict = {
 
   "export.done": "Exported to {path}",
   "export.failed": "Export failed: {message}",
-  "export.reveal": "Show in Finder",
+  "export.reveal": "Open folder",
   "export.tooltip": "Writes Brewfile / requirements.txt / npm-globals / global.json / REBUILD.md",
   "note.brew.multi": "also installed: {0}",
   "note.brew.unreported": "brew info did not report this formula (possibly deprecated or renamed)",

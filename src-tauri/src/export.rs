@@ -276,5 +276,17 @@ pub fn reveal(path: &str) -> Result<(), String> {
     if !target.exists() {
         return Err(String::from("路徑不存在"));
     }
-    sh::run("open", &["-R", path], Duration::from_secs(15)).map(|_| ())
+    if cfg!(windows) {
+        // explorer 對 /select 的參數格式要求較鬆，失敗時回非零碼
+        sh::run(
+            "explorer",
+            &[&format!("/select,{path}")],
+            Duration::from_secs(15),
+        )
+        .map(|_| ())
+    } else if cfg!(target_os = "macos") {
+        sh::run("open", &["-R", path], Duration::from_secs(15)).map(|_| ())
+    } else {
+        sh::run("xdg-open", &[path], Duration::from_secs(15)).map(|_| ())
+    }
 }
