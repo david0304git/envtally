@@ -1,6 +1,7 @@
 use crate::models::Item;
 use crate::scan::{first_line, origin_for, pick_version, Part};
 use crate::sh;
+use std::collections::HashMap;
 use std::time::Duration;
 
 pub fn scan() -> Result<Part, String> {
@@ -16,6 +17,30 @@ pub fn scan() -> Result<Part, String> {
     Ok(part)
 }
 
+/// 一次把全部 gem 的 summary 抓回來（48 個 gem 只要 0.05 秒）。
+fn gem_summaries() -> HashMap<String, String> {
+    const SCRIPT: &str = r#"require "rubygems"
+Gem::Specification.each { |s| puts s.name + "\t" + s.summary.to_s.gsub(/\s+/, " ") }"#;
+
+    let mut map = HashMap::new();
+    let Ok(out) = sh::run("ruby", &["-e", SCRIPT], Duration::from_secs(90)) else {
+        return map;
+    };
+    if !out.ok() {
+        return map;
+    }
+    for line in out.stdout.lines() {
+        let Some((name, summary)) = line.split_once('\t') else {
+            continue;
+        };
+        let summary = summary.trim();
+        if !name.trim().is_empty() && !summary.is_empty() {
+            map.insert(name.trim().to_string(), summary.to_string());
+        }
+    }
+    map
+}
+
 fn java(part: &mut Part) {
     let mut found = false;
     // /usr/libexec/java_home -V 把清單印在 stderr
@@ -27,7 +52,12 @@ fn java(part: &mut Part) {
                 continue;
             };
             let version = &line[..first_space];
-            if !version.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false) {
+            if !version
+                .chars()
+                .next()
+                .map(|c| c.is_ascii_digit())
+                .unwrap_or(false)
+            {
                 continue;
             }
             if version.split('.').count() < 2 {
@@ -54,6 +84,7 @@ fn java(part: &mut Part) {
                 version,
             )
             .kind("runtime")
+            .about("Java 執行環境（JDK）：跑 Java 程式、也提供編譯工具")
             .note("由 JDK 安裝器管理，升級需重新安裝");
             if let Some(home) = home {
                 item = item.at(home);
@@ -69,9 +100,11 @@ fn java(part: &mut Part) {
     if !found {
         match sh::run("java", &["-version"], Duration::from_secs(20)) {
             Ok(out) => match pick_version(out.text()) {
-                Some(version) => part
-                    .items
-                    .push(Item::new("runtimes", "Java", "Java", &version).kind("runtime")),
+                Some(version) => part.items.push(
+                    Item::new("runtimes", "Java", "Java", &version)
+                        .kind("runtime")
+                        .about("Java 執行環境（JDK）"),
+                ),
                 None => part.warn(format!("java -version 輸出無法解析：{}", first_line(out.text()))),
             },
             Err(e) => part.warn(format!("Java 讀取失敗：{e}")),
@@ -89,7 +122,12 @@ fn dotnet(part: &mut Part) {
             // 9.0.304 [/usr/local/share/dotnet/sdk]
             let mut tokens = line.splitn(2, ' ');
             let Some(version) = tokens.next() else { continue };
-            if !version.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false) {
+            if !version
+                .chars()
+                .next()
+                .map(|c| c.is_ascii_digit())
+                .unwrap_or(false)
+            {
                 continue;
             }
             let path = tokens
@@ -102,7 +140,8 @@ fn dotnet(part: &mut Part) {
             part.items.push(
                 Item::new("runtimes", ".NET SDK", ".NET SDK", version)
                     .kind("sdk")
-                    .at(path),
+                    .at(path)
+                    .about(".NET 的編譯與建置工具鏈（dotnet build / run / publish）"),
             );
         }
     }
@@ -120,10 +159,16 @@ fn dotnet(part: &mut Part) {
                 .trim_start_matches('[')
                 .trim_end_matches(']')
                 .to_string();
+            let about = if name.starts_with("Microsoft.AspNetCore") {
+                "ASP.NET Core 執行階段：跑網站與 Web API"
+            } else {
+                ".NET 執行階段：跑已編譯的 .NET 程式"
+            };
             part.items.push(
                 Item::new("runtimes", ".NET 執行階段", name, version)
                     .kind("runtime")
-                    .at(path),
+                    .at(path)
+                    .about(about),
             );
         }
     }
@@ -140,6 +185,7 @@ fn php(part: &mut Part) {
                 Item::new("runtimes", origin_for(&path_str), "PHP", &version)
                     .kind("runtime")
                     .at(path_str)
+                    .about("PHP 直譯器：常用於網站後端與命令列腳本")
                     .cmd("brew upgrade php"),
             ),
             None => part.warn("PHP 版本輸出無法解析".to_string()),
@@ -159,18 +205,17 @@ fn ruby(part: &mut Part) {
     if let Ok(out) = sh::run("ruby", &["-v"], Duration::from_secs(20)) {
         let line = first_line(out.text());
         if let Some(rest) = line.strip_prefix("ruby ") {
-            version = rest
-                .split_whitespace()
-                .next()
-                .unwrap_or("未知")
-                .to_string();
+            version = rest.split_whitespace().next().unwrap_or("未知").to_string();
         }
     }
     part.items.push(
         Item::new("runtimes", origin, "Ruby", &version)
             .kind("runtime")
-            .at(path_str),
+            .at(path_str)
+            .about("Ruby 直譯器：macOS 內建版本，系統工具（如 CocoaPods）會用到"),
     );
+
+    let summaries = gem_summaries();
 
     match sh::run("gem", &["list", "--local"], Duration::from_secs(90)) {
         Ok(out) if out.ok() => {
@@ -196,16 +241,16 @@ fn ruby(part: &mut Part) {
                 let mut item = Item::new("runtimes", "Ruby gem", name, version)
                     .kind("gem")
                     .cmd(format!("gem update {name}"));
+                if let Some(summary) = summaries.get(name) {
+                    item = item.about(summary.clone());
+                }
                 if is_default {
                     item = item.note("Ruby 內建 default gem（更新通常需要 sudo，不建議動）");
                 }
                 part.items.push(item);
             }
         }
-        Ok(out) => part.warn(format!(
-            "gem 清單讀取失敗：{}",
-            first_line(out.text())
-        )),
+        Ok(out) => part.warn(format!("gem 清單讀取失敗：{}", first_line(out.text()))),
         Err(e) => part.warn(format!("gem 清單讀取失敗：{e}")),
     }
 }

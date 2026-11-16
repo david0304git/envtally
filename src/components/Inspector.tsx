@@ -34,6 +34,7 @@ export default function Inspector({ row, onClose }: Props) {
         <p className={`inspector-status is-${row.statusResolved}`}>
           {statusLabel(row.statusResolved, row.latestResolved)}
         </p>
+        {row.description && <p className="inspector-desc">{row.description}</p>}
       </div>
 
       <dl className="fields">

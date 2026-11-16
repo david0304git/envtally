@@ -32,6 +32,8 @@ pub struct Item {
     pub location: Option<String>,
     pub update_command: Option<String>,
     pub note: Option<String>,
+    /// 這個套件／工具在做什麼（來自上游 metadata，不是我手寫的）
+    pub description: Option<String>,
     pub status: Status,
     pub latest: Option<String>,
 }
@@ -50,6 +52,7 @@ impl Item {
             location: None,
             update_command: None,
             note: None,
+            description: None,
             status: Status::Unknown,
             latest: None,
         }
@@ -72,6 +75,15 @@ impl Item {
 
     pub fn note(mut self, note: impl Into<String>) -> Self {
         self.note = Some(note.into());
+        self
+    }
+
+    pub fn about(mut self, description: impl Into<String>) -> Self {
+        let text = description.into();
+        let trimmed = text.trim();
+        if !trimmed.is_empty() {
+            self.description = Some(trimmed.to_string());
+        }
         self
     }
 }

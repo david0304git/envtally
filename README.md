@@ -4,6 +4,10 @@
 
 ![介面截圖](docs/screenshot.png)
 
+點一列，右側會顯示這個套件**在做什麼**、裝在哪、以及可以複製的更新指令：
+
+<img src="docs/inspector.png" width="320" alt="細節面板" />
+
 ## 它做什麼
 
 | 生態系 | 抓什麼 | 怎麼抓 |
@@ -15,7 +19,21 @@
 | 語言執行環境 | Java、.NET SDK/執行階段、PHP、Ruby 與 gem | `java_home -V`、`dotnet --list-*`、`php -v`、`gem list --local` |
 | 系統工具 | git、curl、jq、ffmpeg、sqlite3 等 24 種命令列工具 | 各自跑 `--version`，取第一個版本號 |
 
-六個生態系並行掃描，實測 **618 項 / 約 1.9 秒**。
+六個生態系並行掃描，實測 **619 項 / 約 1 秒**。
+
+### 套件說明從哪來
+
+每一項都盡量附一句「這是什麼」，來源是**上游自己的 metadata，不是手寫的**：
+
+| 來源 | 抓法 | 覆蓋 |
+|---|---|---|
+| Homebrew | `brew info --json=v2 --installed` 的 `desc` 欄位 | 154/154 |
+| Python | `importlib.metadata` 的 `Summary`（本地讀，比 `pip list` 快） | 384/390 |
+| npm 全域 | 各套件自己的 `package.json` → `description` | 5/6 |
+| Ruby gem | `Gem::Specification#summary`（一次呼叫抓全部） | 48/48 |
+| 執行環境 / 系統工具 | 程式內建的短說明（JDK、.NET、PHP、Ruby、git、ffmpeg…） | 68/68 |
+
+合計 **610/619（98%）**。少數套件上游本來就沒寫 Summary（例如 `orjson`、`safetensors`、`corepack`），面板就只顯示版本相關資訊，不會硬塞一段猜測的文字。
 
 ### 版本狀態
 
@@ -94,4 +112,6 @@ docs/screenshot.png      README 用截圖
 - **不能直接升級**：按鈕只複製指令，不執行。要加的話得先做 dry-run 與逐步確認。
 - **只支援 macOS**：PATH 探測、`java_home`、`scutil` 都是 macOS 專屬。
 - **`brew list --versions` 之外不做 `brew outdated` 快取**：每次按 `檢查更新` 都重新問。
+- **說明是上游原文**：多為英文；只有系統工具與執行環境是我寫的中文短句。
+- **`brew info --json=v2 --installed` 偶爾會漏 formula**（例如已停用的 `rubberband`、被改名的 `sdl2`→`sdl2-compat`）；掃描後會再用 `brew list --versions` 對帳補回，並在備註標明「brew info 沒有回報」。
 - 從 Finder 直接開 `.app` 時 PATH 很窄，所以 `sh.rs` 會自己組一份 PATH（`/opt/homebrew/bin`、`~/.cargo/bin`、nvm 最新版的 bin…）。

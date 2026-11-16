@@ -762,6 +762,14 @@ button {
   color: var(--red);
 }
 
+/* 這個套件在做什麼（來自上游 metadata，不是手寫的） */
+.inspector-desc {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
 .fields {
   display: grid;
   gap: 13px;

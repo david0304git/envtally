@@ -9,7 +9,32 @@ use std::time::Duration;
 struct PipPackage {
     name: String,
     version: String,
+    #[serde(default)]
+    summary: String,
 }
+
+/// 直接讀已安裝套件的 metadata（Summary 欄位），比 `pip list` 快，
+/// 而且順便拿到「這個套件在做什麼」。
+const METADATA_SCRIPT: &str = r#"
+import json, importlib.metadata as md
+seen = {}
+for d in md.distributions():
+    try:
+        name = d.metadata["Name"] or ""
+        if not name:
+            continue
+        key = name.lower()
+        if key in seen:
+            continue
+        seen[key] = {
+            "name": name,
+            "version": d.version,
+            "summary": (d.metadata["Summary"] or "").strip(),
+        }
+    except Exception:
+        continue
+print(json.dumps(list(seen.values())))
+"#;
 
 /// 一個可用的 Python 直譯器。
 pub struct Interp {
@@ -70,17 +95,13 @@ fn probe(path: &PathBuf) -> Option<Interp> {
 pub fn discover() -> Vec<Interp> {
     let mut candidates: Vec<PathBuf> = Vec::new();
 
-    // 先看 PATH 與常見 bin 目錄裡的 python3 / python3.NN
     for dir in sh::search_dirs() {
         let Ok(entries) = std::fs::read_dir(dir) else {
             continue;
         };
         let mut found: Vec<PathBuf> = entries
             .flatten()
-            .filter(|e| {
-                is_python_bin(&e.file_name().to_string_lossy())
-                    && e.path().is_file()
-            })
+            .filter(|e| is_python_bin(&e.file_name().to_string_lossy()) && e.path().is_file())
             .map(|e| e.path())
             .collect();
         found.sort();
@@ -120,6 +141,33 @@ pub fn discover() -> Vec<Interp> {
     out
 }
 
+/// 先試 metadata（含說明），失敗再退回 pip list（沒有說明）。
+fn packages(exe: &str) -> Result<Vec<PipPackage>, String> {
+    let fast = sh::run(
+        exe,
+        &["-W", "ignore", "-c", METADATA_SCRIPT],
+        Duration::from_secs(120),
+    );
+    if let Ok(out) = fast {
+        if out.ok() {
+            if let Ok(list) = serde_json::from_str::<Vec<PipPackage>>(&out.stdout) {
+                return Ok(list);
+            }
+        }
+    }
+
+    let out = sh::run(
+        exe,
+        &["-m", "pip", "list", "--format=json", "--disable-pip-version-check"],
+        Duration::from_secs(180),
+    )?;
+    if !out.ok() {
+        return Err(first_line(out.text()));
+    }
+    serde_json::from_str::<Vec<PipPackage>>(&out.stdout)
+        .map_err(|e| format!("pip 輸出無法解析：{e}"))
+}
+
 pub fn scan() -> Result<Part, String> {
     let interps = discover();
     if interps.is_empty() {
@@ -132,6 +180,7 @@ pub fn scan() -> Result<Part, String> {
             Item::new("python", &interp.source, "Python", &interp.version)
                 .kind("runtime")
                 .at(interp.path.display().to_string())
+                .about("Python 直譯器本體；下面列出它這個環境裝了哪些套件")
                 .note(format!("prefix：{}", interp.prefix)),
         );
 
@@ -142,29 +191,17 @@ pub fn scan() -> Result<Part, String> {
             .map(|n| n.to_string_lossy().to_string())
             .unwrap_or_else(|| String::from("python3"));
 
-        match sh::run(
-            &exe,
-            &["-m", "pip", "list", "--format=json", "--disable-pip-version-check"],
-            Duration::from_secs(120),
-        ) {
-            Ok(out) if out.ok() => match serde_json::from_str::<Vec<PipPackage>>(&out.stdout) {
-                Ok(packages) => {
-                    for pkg in packages {
-                        part.items.push(
-                            Item::new("python", &interp.source, &pkg.name, &pkg.version)
-                                .kind("package")
-                                .cmd(format!("{label} -m pip install -U {}", pkg.name)),
-                        );
-                    }
+        match packages(&exe) {
+            Ok(packages) => {
+                for pkg in packages {
+                    let mut item = Item::new("python", &interp.source, &pkg.name, &pkg.version)
+                        .kind("package")
+                        .cmd(format!("{label} -m pip install -U {}", pkg.name));
+                    item = item.about(pkg.summary);
+                    part.items.push(item);
                 }
-                Err(e) => part.warn(format!("{} 的 pip 輸出無法解析：{e}", interp.source)),
-            },
-            Ok(out) => part.warn(format!(
-                "{} 讀不到 pip 清單：{}",
-                interp.source,
-                first_line(out.text())
-            )),
-            Err(e) => part.warn(format!("{} 讀不到 pip 清單：{e}", interp.source)),
+            }
+            Err(e) => part.warn(format!("{} 讀不到套件清單：{e}", interp.source)),
         }
     }
 

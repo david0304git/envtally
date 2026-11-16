@@ -76,10 +76,21 @@ async function bootstrap() {
     }, 400);
   }
 
-  // ?selected=1 自動選第一列，方便看右側細節抽屜
-  if (params.get("selected") === "1") {
+  // ?selected=1 自動選第一列；?select=<名稱> 選指定那一列，方便看細節抽屜
+  const wantedSelect = params.get("select");
+  if (params.get("selected") === "1" || wantedSelect) {
     window.setTimeout(() => {
-      document.querySelector<HTMLElement>(".inv-row")?.click();
+      const rows = Array.from(document.querySelectorAll<HTMLElement>(".inv-row"));
+      const target =
+        wantedSelect === null
+          ? rows[0]
+          : rows.find(
+              (row) =>
+                row.querySelector(".cell-name")?.textContent?.trim().toLowerCase() ===
+                wantedSelect.toLowerCase(),
+            );
+      target?.click();
+      target?.scrollIntoView({ block: "center" });
     }, 700);
   }
 }

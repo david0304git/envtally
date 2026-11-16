@@ -11,6 +11,7 @@ export interface Item {
   location: string | null;
   updateCommand: string | null;
   note: string | null;
+  description: string | null;
   status: Status;
   latest: string | null;
 }

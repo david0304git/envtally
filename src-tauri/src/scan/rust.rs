@@ -47,6 +47,7 @@ pub fn scan() -> Result<Part, String> {
             let mut item = Item::new("rust", "rustup", &name, &version)
                 .kind("toolchain")
                 .at(entry.path().display().to_string())
+                .about("Rust 編譯器與工具鏈（rustc / cargo / rustup），一個 toolchain 就是一套完整版本")
                 .cmd(format!("rustup update {name}"));
             if active.starts_with(&name) {
                 item = item.note("預設 toolchain");
@@ -62,6 +63,7 @@ pub fn scan() -> Result<Part, String> {
                 part.items.push(
                     Item::new("rust", "PATH", "Rust", &version)
                         .kind("toolchain")
+                        .about("Rust 編譯器（rustc）")
                         .at(sh::which("rustc").map(|p| p.display().to_string()).unwrap_or_default()),
                 );
                 found = true;

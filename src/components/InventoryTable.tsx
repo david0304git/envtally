@@ -100,7 +100,10 @@ export default function InventoryTable({
             <span className="cell-status">
               <i className={`dot dot--${row.statusResolved}`} />
             </span>
-            <span className="cell-name" title={row.name}>
+            <span
+              className="cell-name"
+              title={row.description ? `${row.name}\n${row.description}` : row.name}
+            >
               {row.name}
             </span>
             <span className="cell-version">{row.version}</span>
