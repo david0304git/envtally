@@ -76,6 +76,40 @@ async function bootstrap() {
     }, 400);
   }
 
+  // ?sort=<name|version|latest|source|kind>:<asc|desc> 代按表頭，驗證升降冪
+  const sortParam = params.get("sort");
+  if (sortParam) {
+    const [key, dir] = sortParam.split(":");
+    const labels: Record<string, string> = {
+      name: "名稱",
+      version: "已安裝",
+      latest: "最新",
+      source: "來源",
+      kind: "類型",
+    };
+    window.setTimeout(() => {
+      const button = Array.from(document.querySelectorAll<HTMLButtonElement>(".h-sort")).find(
+        (element) => element.textContent?.includes(labels[key] ?? key),
+      );
+      button?.click();
+      if (dir === "desc") window.setTimeout(() => button?.click(), 150);
+    }, 500);
+  }
+
+  // ?railsort=<name|count>:<asc|desc> 代按左側排序，驗證升降冪
+  const railSortParam = params.get("railsort");
+  if (railSortParam) {
+    const [key, dir] = railSortParam.split(":");
+    const labels: Record<string, string> = { name: "名稱", count: "件數" };
+    window.setTimeout(() => {
+      const button = Array.from(document.querySelectorAll<HTMLButtonElement>(".rail-sort button")).find(
+        (element) => element.textContent?.includes(labels[key] ?? key),
+      );
+      button?.click();
+      if (dir === "desc") window.setTimeout(() => button?.click(), 150);
+    }, 500);
+  }
+
   // ?collapsed=1 自動按下「收合全部分類」，看環境版本總覽
   if (params.get("collapsed") === "1") {
     window.setTimeout(() => {

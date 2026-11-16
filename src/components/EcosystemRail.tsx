@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ALL_SCOPE } from "../rows";
+import { ALL_SCOPE, type SortDir } from "../rows";
 import type { Ecosystem } from "../types";
 import EcosystemIcon from "./EcosystemIcon";
 
@@ -22,6 +22,22 @@ interface Props {
 export default function EcosystemRail({ ecosystems, counts, scope, total, onSelect }: Props) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<RailSort>("default");
+  const [dir, setDir] = useState<SortDir>("asc");
+
+  // 同一選項再按一次就反向；換選項從遞增開始
+  const chooseSort = (id: RailSort) => {
+    if (id === "default") {
+      setSort("default");
+      setDir("asc");
+      return;
+    }
+    if (id === sort) {
+      setDir((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setSort(id);
+    setDir("asc");
+  };
 
   const max = Math.max(1, ...ecosystems.map((eco) => counts.get(eco.id)?.total ?? 0));
 
@@ -39,14 +55,15 @@ export default function EcosystemRail({ ecosystems, counts, scope, total, onSele
     }
 
     if (sort === "name") {
-      return [...list].sort((a, b) => a.label.localeCompare(b.label, "zh-Hant"));
-    }
-    if (sort === "count") {
+      list = [...list].sort((a, b) => a.label.localeCompare(b.label, "zh-Hant"));
+    } else if (sort === "count") {
       const size = (id: string) => counts.get(id)?.total ?? 0;
-      return [...list].sort((a, b) => size(b.id) - size(a.id));
+      list = [...list].sort((a, b) => size(a.id) - size(b.id));
+    } else {
+      return list;
     }
-    return list;
-  }, [ecosystems, query, sort, counts]);
+    return dir === "desc" ? [...list].reverse() : list;
+  }, [ecosystems, query, sort, dir, counts]);
 
   return (
     <nav className="rail" aria-label="分類">
@@ -71,9 +88,14 @@ export default function EcosystemRail({ ecosystems, counts, scope, total, onSele
               key={option.id}
               type="button"
               className={sort === option.id ? "is-active" : ""}
-              onClick={() => setSort(option.id)}
+              onClick={() => chooseSort(option.id)}
             >
               {option.label}
+              {sort === option.id && option.id !== "default" && (
+                <span className="rail-sort-arrow" aria-hidden="true">
+                  {dir === "asc" ? "↑" : "↓"}
+                </span>
+              )}
             </button>
           ))}
         </div>

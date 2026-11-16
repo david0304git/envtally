@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import type { SortKey, StatusFilter } from "../rows";
+import type { StatusFilter } from "../rows";
 
 interface Props {
   inputRef: RefObject<HTMLInputElement | null>;
@@ -7,8 +7,6 @@ interface Props {
   onQuery: (value: string) => void;
   filter: StatusFilter;
   onFilter: (value: StatusFilter) => void;
-  sort: SortKey;
-  onSort: (value: SortKey) => void;
   shown: number;
   total: number;
   checkedAt: number | null;
@@ -30,8 +28,6 @@ export default function Toolbar({
   onQuery,
   filter,
   onFilter,
-  sort,
-  onSort,
   shown,
   total,
   checkedAt,
@@ -78,17 +74,6 @@ export default function Toolbar({
           {allGroupsCollapsed ? "展開全部分類" : "收合全部分類"}
         </button>
       )}
-
-      <select
-        className="select"
-        value={sort}
-        onChange={(event) => onSort(event.target.value as SortKey)}
-        aria-label="排序方式"
-      >
-        <option value="name">依名稱</option>
-        <option value="version">依版本</option>
-        <option value="source">依來源</option>
-      </select>
 
       <span className="count-note">
         {checkedAt === null && <span className="check-hint">版本未檢查 · </span>}

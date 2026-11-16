@@ -9,7 +9,8 @@ export interface Row extends Item {
   checkable: boolean;
 }
 
-export type SortKey = "name" | "version" | "source";
+export type SortKey = "name" | "version" | "latest" | "source" | "kind";
+export type SortDir = "asc" | "desc";
 export type StatusFilter = "all" | "outdated" | "current" | "unknown";
 
 export type ViewRow =
@@ -94,13 +95,25 @@ function naturalCompare(a: string, b: string): number {
 }
 
 export function compareRows(a: Row, b: Row, sort: SortKey): number {
-  if (sort === "version") {
-    return naturalCompare(a.version, b.version) || naturalCompare(a.name, b.name);
+  const byName = () => naturalCompare(a.name, b.name);
+  switch (sort) {
+    case "version":
+      return naturalCompare(a.version, b.version) || byName();
+    case "latest":
+      return naturalCompare(a.latestResolved ?? "", b.latestResolved ?? "") || byName();
+    case "source":
+      return naturalCompare(a.source, b.source) || byName();
+    case "kind":
+      return naturalCompare(kindLabel(a.kind), kindLabel(b.kind)) || byName();
+    default:
+      return byName();
   }
-  if (sort === "source") {
-    return naturalCompare(a.source, b.source) || naturalCompare(a.name, b.name);
-  }
-  return naturalCompare(a.name, b.name);
+}
+
+export function sortRows(rows: Row[], sort: SortKey, dir: SortDir): Row[] {
+  const sorted = [...rows].sort((a, b) => compareRows(a, b, sort));
+  // 第二段（名稱）也一起反轉，維持「反向排序」的直覺
+  return dir === "desc" ? sorted.reverse() : sorted;
 }
 
 /** 全部檢視時依生態系分組，其餘檢視時只是一個排序好的清單。 */
@@ -109,20 +122,19 @@ export function buildView(
   ecosystems: Ecosystem[],
   grouped: boolean,
   sort: SortKey,
+  dir: SortDir,
   collapsedGroups: ReadonlySet<string>,
   forceExpand: boolean,
 ): ViewRow[] {
   if (!grouped) {
-    return [...rows]
-      .sort((a, b) => compareRows(a, b, sort))
-      .map((row) => ({ type: "item", row }));
+    return sortRows(rows, sort, dir).map((row) => ({ type: "item", row }));
   }
 
   const view: ViewRow[] = [];
   for (const eco of ecosystems) {
     const group = rows.filter((row) => row.ecosystem === eco.id);
     if (group.length === 0) continue;
-    group.sort((a, b) => compareRows(a, b, sort));
+    const sorted = sortRows(group, sort, dir);
     const collapsed = !forceExpand && collapsedGroups.has(eco.id);
     view.push({
       type: "group",
@@ -135,7 +147,7 @@ export function buildView(
       collapsed,
     });
     if (collapsed) continue;
-    for (const row of group) view.push({ type: "item", row });
+    for (const row of sorted) view.push({ type: "item", row });
   }
   return view;
 }

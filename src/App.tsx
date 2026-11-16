@@ -12,6 +12,7 @@ import {
   kindLabel,
   resolveRows,
   type Row,
+  type SortDir,
   type SortKey,
   type StatusFilter,
 } from "./rows";
@@ -29,6 +30,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [sort, setSort] = useState<SortKey>("name");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showWarnings, setShowWarnings] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
@@ -154,6 +156,18 @@ export default function App() {
   // 有搜尋或篩選時強制展開，否則命中結果會藏在收合的分類裡
   const forceExpand = query.trim() !== "" || filter !== "all";
 
+  // 同一欄再按一次就反向；換欄位則從遞增開始
+  const handleSort = useCallback((key: SortKey) => {
+    setSort((current) => {
+      if (current === key) {
+        setSortDir((dir) => (dir === "asc" ? "desc" : "asc"));
+        return current;
+      }
+      setSortDir("asc");
+      return key;
+    });
+  }, []);
+
   const view = useMemo(
     () =>
       buildView(
@@ -161,10 +175,11 @@ export default function App() {
         ecosystems,
         scope === ALL_SCOPE,
         sort,
+        sortDir,
         collapsedGroups,
         forceExpand,
       ),
-    [visibleRows, ecosystems, scope, sort, collapsedGroups, forceExpand],
+    [visibleRows, ecosystems, scope, sort, sortDir, collapsedGroups, forceExpand],
   );
 
   const toggleGroup = useCallback((id: string) => {
@@ -255,8 +270,6 @@ export default function App() {
             onQuery={setQuery}
             filter={filter}
             onFilter={setFilter}
-            sort={sort}
-            onSort={setSort}
             shown={visibleRows.length}
             total={scopeTotal}
             checkedAt={updates?.checkedAtMs ?? null}
@@ -288,6 +301,9 @@ export default function App() {
             selectedId={selectedId}
             onSelect={setSelectedId}
             onToggleGroup={toggleGroup}
+            sort={sort}
+            sortDir={sortDir}
+            onSort={handleSort}
             scanning={scanning}
             hasInventory={inventory !== null}
             emptyHint={query.trim() || filter !== "all" ? "沒有符合條件的項目" : "這個分類目前是空的"}

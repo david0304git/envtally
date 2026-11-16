@@ -1,12 +1,24 @@
 import { useRef } from "react";
 import type { KeyboardEvent } from "react";
-import { kindLabel, type ViewRow } from "../rows";
+import { kindLabel, type SortDir, type SortKey, type ViewRow } from "../rows";
+
+const COLUMNS: Array<{ key: SortKey | null; label: string; className: string }> = [
+  { key: "name", label: "名稱", className: "h-name" },
+  { key: "version", label: "已安裝", className: "h-version" },
+  { key: "latest", label: "最新", className: "h-latest" },
+  { key: "source", label: "來源", className: "h-source" },
+  { key: "kind", label: "類型", className: "h-kind" },
+  { key: null, label: "備註", className: "h-note" },
+];
 
 interface Props {
   view: ViewRow[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onToggleGroup: (id: string) => void;
+  sort: SortKey;
+  sortDir: SortDir;
+  onSort: (key: SortKey) => void;
   scanning: boolean;
   hasInventory: boolean;
   emptyHint: string;
@@ -17,6 +29,9 @@ export default function InventoryTable({
   selectedId,
   onSelect,
   onToggleGroup,
+  sort,
+  sortDir,
+  onSort,
   scanning,
   hasInventory,
   emptyHint,
@@ -35,12 +50,28 @@ export default function InventoryTable({
     <div className="inv-scroll" ref={scrollRef}>
       <div className="inv-head" role="row">
         <span className="h-status" aria-hidden="true" />
-        <span className="h-name">名稱</span>
-        <span className="h-version">已安裝</span>
-        <span className="h-latest">最新</span>
-        <span className="h-source">來源</span>
-        <span className="h-kind">類型</span>
-        <span className="h-note">備註</span>
+        {COLUMNS.map((column) =>
+          column.key === null ? (
+            <span key={column.className} className={column.className}>
+              {column.label}
+            </span>
+          ) : (
+            <button
+              key={column.className}
+              type="button"
+              className={`${column.className} h-sort ${sort === column.key ? "is-active" : ""}`}
+              onClick={() => onSort(column.key as SortKey)}
+              aria-label={`依${column.label}排序，再按一次反向`}
+            >
+              {column.label}
+              {sort === column.key && (
+                <span className="h-arrow" aria-hidden="true">
+                  {sortDir === "asc" ? "↑" : "↓"}
+                </span>
+              )}
+            </button>
+          ),
+        )}
       </div>
 
       {!hasInventory && (
