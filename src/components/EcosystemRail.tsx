@@ -85,8 +85,8 @@ export default function EcosystemRail({ ecosystems, counts, scope, total, onSele
         onClick={() => onSelect(ALL_SCOPE)}
       >
         <span className="rail-label">全部</span>
-        <span className="rail-count">{total}</span>
         <EcosystemIcon id="all" />
+        <span className="rail-count">{total}</span>
         <span className="rail-bar">
           <i style={{ width: "100%" }} />
         </span>
@@ -107,11 +107,11 @@ export default function EcosystemRail({ ecosystems, counts, scope, total, onSele
             title={eco.error ?? eco.blurb}
           >
             <span className="rail-label">{eco.label}</span>
+            <EcosystemIcon id={eco.id} />
             <span className="rail-count">
               {stat.total}
               {stat.outdated > 0 && <span className="rail-warn">{stat.outdated}</span>}
             </span>
-            <EcosystemIcon id={eco.id} />
             <span className="rail-bar">
               <i style={{ width: `${width}%` }} />
             </span>
