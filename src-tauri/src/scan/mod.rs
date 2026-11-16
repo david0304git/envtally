@@ -56,18 +56,6 @@ pub fn version_key(version: &str) -> Vec<u64> {
         .collect()
 }
 
-/// 把環境版本一段一段疊到 headline 上（多個語言共用一個分類時用）。
-pub fn add_headline(part: &mut Part, text: impl Into<String>) {
-    let text = text.into();
-    match &mut part.headline {
-        Some(existing) => {
-            existing.push_str(" · ");
-            existing.push_str(&text);
-        }
-        None => part.headline = Some(text),
-    }
-}
-
 pub fn first_line(text: &str) -> String {
     text.lines()
         .map(str::trim)
@@ -126,7 +114,10 @@ fn specs() -> Vec<(&'static str, &'static str, &'static str, ScanFn, bool)> {
         ("python", "Python", "pip 套件與直譯器", python::scan, true),
         ("node", "Node.js", "nvm 版本與全域 npm", node::scan, true),
         ("rust", "Rust", "rustup toolchain 與 cargo bin", rust::scan, true),
-        ("runtimes", "語言執行環境", "Java、.NET、PHP、Ruby", runtimes::scan, false),
+        ("java", "Java", "JDK 執行環境", runtimes::java, false),
+        ("dotnet", ".NET", "SDK 與執行階段", runtimes::dotnet, false),
+        ("php", "PHP", "直譯器", runtimes::php, false),
+        ("ruby", "Ruby", "直譯器與 gem", runtimes::ruby, false),
         ("system", "系統工具", "命令列工具版本", system::scan, false),
     ]
 }

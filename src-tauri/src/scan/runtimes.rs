@@ -1,48 +1,16 @@
+//! 語言執行環境：Java / .NET / PHP / Ruby 各自是一個分類，
+//! 這樣在「全部」檢視收合時，每個環境都跟 Python 一樣有自己的版本列。
+
 use crate::models::Item;
-use crate::scan::{add_headline, first_line, origin_for, pick_version, Part};
+use crate::scan::{first_line, origin_for, pick_version, Part};
 use crate::sh;
 use std::collections::HashMap;
 use std::time::Duration;
 
-pub fn scan() -> Result<Part, String> {
+pub fn java() -> Result<Part, String> {
     let mut part = Part::new();
-    java(&mut part);
-    dotnet(&mut part);
-    php(&mut part);
-    ruby(&mut part);
-
-    if part.items.is_empty() {
-        return Err(String::from("找不到 Java / .NET / PHP / Ruby"));
-    }
-    Ok(part)
-}
-
-/// 一次把全部 gem 的 summary 抓回來（48 個 gem 只要 0.05 秒）。
-fn gem_summaries() -> HashMap<String, String> {
-    const SCRIPT: &str = r#"require "rubygems"
-Gem::Specification.each { |s| puts s.name + "\t" + s.summary.to_s.gsub(/\s+/, " ") }"#;
-
-    let mut map = HashMap::new();
-    let Ok(out) = sh::run("ruby", &["-e", SCRIPT], Duration::from_secs(90)) else {
-        return map;
-    };
-    if !out.ok() {
-        return map;
-    }
-    for line in out.stdout.lines() {
-        let Some((name, summary)) = line.split_once('\t') else {
-            continue;
-        };
-        let summary = summary.trim();
-        if !name.trim().is_empty() && !summary.is_empty() {
-            map.insert(name.trim().to_string(), summary.to_string());
-        }
-    }
-    map
-}
-
-fn java(part: &mut Part) {
     let mut found = false;
+
     // /usr/libexec/java_home -V 把清單印在 stderr
     if let Ok(out) = sh::run("/usr/libexec/java_home", &["-V"], Duration::from_secs(30)) {
         let text = format!("{}\n{}", out.stdout, out.stderr);
@@ -77,12 +45,12 @@ fn java(part: &mut Part) {
                 .map(|s| s.trim().to_string())
                 .filter(|s| s.starts_with('/'));
 
-            if !found {
-                add_headline(part, format!("Java {version}"));
+            if part.headline.is_none() {
+                part.headline = Some(version.to_string());
             }
 
             let mut item = Item::new(
-                "runtimes",
+                "java",
                 vendor.as_deref().unwrap_or("Java"),
                 "Java",
                 version,
@@ -105,9 +73,9 @@ fn java(part: &mut Part) {
         match sh::run("java", &["-version"], Duration::from_secs(20)) {
             Ok(out) => match pick_version(out.text()) {
                 Some(version) => {
-                    add_headline(part, format!("Java {version}"));
+                    part.headline = Some(version.clone());
                     part.items.push(
-                        Item::new("runtimes", "Java", "Java", &version)
+                        Item::new("java", "Java", "Java", &version)
                             .kind("runtime")
                             .about("Java 執行環境（JDK）"),
                     );
@@ -117,14 +85,20 @@ fn java(part: &mut Part) {
             Err(e) => part.warn(format!("Java 讀取失敗：{e}")),
         }
     }
+
+    if part.items.is_empty() {
+        return Err(String::from("找不到 Java（沒有 JDK）"));
+    }
+    Ok(part)
 }
 
-fn dotnet(part: &mut Part) {
+pub fn dotnet() -> Result<Part, String> {
     if !sh::exists("dotnet") {
-        return;
+        return Err(String::from("找不到 dotnet（.NET 未安裝）"));
     }
 
-    let mut sdk_headlined = false;
+    let mut part = Part::new();
+
     if let Ok(out) = sh::run("dotnet", &["--list-sdks"], Duration::from_secs(60)) {
         for line in out.stdout.lines() {
             // 9.0.304 [/usr/local/share/dotnet/sdk]
@@ -145,12 +119,11 @@ fn dotnet(part: &mut Part) {
                 .trim_start_matches('[')
                 .trim_end_matches(']')
                 .to_string();
-            if !sdk_headlined {
-                add_headline(part, format!(".NET {version}"));
-                sdk_headlined = true;
+            if part.headline.is_none() {
+                part.headline = Some(version.to_string());
             }
             part.items.push(
-                Item::new("runtimes", ".NET SDK", ".NET SDK", version)
+                Item::new("dotnet", ".NET SDK", ".NET SDK", version)
                     .kind("sdk")
                     .at(path)
                     .about(".NET 的編譯與建置工具鏈（dotnet build / run / publish）"),
@@ -177,26 +150,33 @@ fn dotnet(part: &mut Part) {
                 ".NET 執行階段：跑已編譯的 .NET 程式"
             };
             part.items.push(
-                Item::new("runtimes", ".NET 執行階段", name, version)
+                Item::new("dotnet", ".NET 執行階段", name, version)
                     .kind("runtime")
                     .at(path)
                     .about(about),
             );
         }
     }
+
+    if part.items.is_empty() {
+        return Err(String::from("dotnet 沒有回報任何 SDK 或執行階段"));
+    }
+    Ok(part)
 }
 
-fn php(part: &mut Part) {
+pub fn php() -> Result<Part, String> {
     let Some(path) = sh::which("php") else {
-        return;
+        return Err(String::from("找不到 php"));
     };
     let path_str = path.display().to_string();
+    let mut part = Part::new();
+
     match sh::run("php", &["-v"], Duration::from_secs(20)) {
         Ok(out) => match pick_version(out.text()) {
             Some(version) => {
-                add_headline(part, format!("PHP {version}"));
+                part.headline = Some(version.clone());
                 let origin = origin_for(&path_str);
-                let mut item = Item::new("runtimes", origin, "PHP", &version)
+                let mut item = Item::new("php", origin, "PHP", &version)
                     .kind("runtime")
                     .at(path_str)
                     .about("PHP 直譯器：常用於網站後端與命令列腳本");
@@ -209,14 +189,44 @@ fn php(part: &mut Part) {
         },
         Err(e) => part.warn(format!("PHP 讀取失敗：{e}")),
     }
+
+    if part.items.is_empty() {
+        return Err(String::from("讀不到 PHP 版本"));
+    }
+    Ok(part)
 }
 
-fn ruby(part: &mut Part) {
+/// 一次把全部 gem 的 summary 抓回來（48 個 gem 只要 0.05 秒）。
+fn gem_summaries() -> HashMap<String, String> {
+    const SCRIPT: &str = r#"require "rubygems"
+Gem::Specification.each { |s| puts s.name + "\t" + s.summary.to_s.gsub(/\s+/, " ") }"#;
+
+    let mut map = HashMap::new();
+    let Ok(out) = sh::run("ruby", &["-e", SCRIPT], Duration::from_secs(90)) else {
+        return map;
+    };
+    if !out.ok() {
+        return map;
+    }
+    for line in out.stdout.lines() {
+        let Some((name, summary)) = line.split_once('\t') else {
+            continue;
+        };
+        let summary = summary.trim();
+        if !name.trim().is_empty() && !summary.is_empty() {
+            map.insert(name.trim().to_string(), summary.to_string());
+        }
+    }
+    map
+}
+
+pub fn ruby() -> Result<Part, String> {
     let Some(path) = sh::which("ruby") else {
-        return;
+        return Err(String::from("找不到 ruby"));
     };
     let path_str = path.display().to_string();
     let origin = origin_for(&path_str);
+    let mut part = Part::new();
 
     let mut version = String::from("未知");
     if let Ok(out) = sh::run("ruby", &["-v"], Duration::from_secs(20)) {
@@ -225,9 +235,9 @@ fn ruby(part: &mut Part) {
             version = rest.split_whitespace().next().unwrap_or("未知").to_string();
         }
     }
-    add_headline(part, format!("Ruby {version}"));
+    part.headline = Some(version.clone());
     part.items.push(
-        Item::new("runtimes", origin, "Ruby", &version)
+        Item::new("ruby", origin, "Ruby", &version)
             .kind("runtime")
             .at(path_str)
             .about("Ruby 直譯器：macOS 內建版本，系統工具（如 CocoaPods）會用到"),
@@ -256,7 +266,7 @@ fn ruby(part: &mut Part) {
                     raw
                 };
                 let version = cleaned.split(',').next().unwrap_or(cleaned).trim();
-                let mut item = Item::new("runtimes", "Ruby gem", name, version)
+                let mut item = Item::new("ruby", "Ruby gem", name, version)
                     .kind("gem")
                     .cmd(format!("gem update {name}"));
                 if let Some(summary) = summaries.get(name) {
@@ -274,4 +284,6 @@ fn ruby(part: &mut Part) {
         Ok(out) => part.warn(format!("gem 清單讀取失敗：{}", first_line(out.text()))),
         Err(e) => part.warn(format!("gem 清單讀取失敗：{e}")),
     }
+
+    Ok(part)
 }

@@ -12,14 +12,17 @@
 
 | 生態系 | 抓什麼 | 怎麼抓 |
 |---|---|---|
-| Homebrew | formula、cask、Homebrew 本體 | `brew list --versions`，並用 `opt/<name>` 連結判斷**目前生效**的 keg（多版本並存時才不會抓錯） |
-| Python | 每個直譯器（最多 4 個，去重）+ 各自的 pip 套件 | 逐一跑 `<python> -m pip list --format=json` |
+| Homebrew | formula、cask、Homebrew 本體 | `brew info --json=v2 --installed`（一次拿到說明＋已安裝版本），再用 `opt/<name>` 連結判斷**目前生效**的 keg；漏掉的 formula 用 `brew list` 對帳補回 |
+| Python | 每個直譯器（最多 4 個，去重）+ 各自的 pip 套件 | 逐一跑 `<python> -c "import importlib.metadata…"` 直接讀本地 metadata（版本＋Summary，比 `pip list` 快） |
 | Node.js | nvm 下的所有 node 版本、npm、全域套件 | 讀 `~/.nvm/versions/node/*`，`npm ls -g --json` |
 | Rust | rustup 的每個 toolchain、`cargo install` 的執行檔 | 讀 `~/.rustup/toolchains/*`，`rustc --version` |
-| 語言執行環境 | Java、.NET SDK/執行階段、PHP、Ruby 與 gem | `java_home -V`、`dotnet --list-*`、`php -v`、`gem list --local` |
+| Java | JDK 本體 | `java_home -V` |
+| .NET | SDK 與執行階段 | `dotnet --list-sdks`、`dotnet --list-runtimes` |
+| PHP | 直譯器 | `php -v` |
+| Ruby | 直譯器與 gem（49 項） | `ruby -v`、`gem list --local` |
 | 系統工具 | git、curl、jq、ffmpeg、sqlite3 等 24 種命令列工具 | 各自跑 `--version`，取第一個版本號 |
 
-六個生態系並行掃描，實測 **619 項 / 約 1 秒**。
+九個分類並行掃描，實測 **619 項 / 約 1 秒**。
 
 ### 套件說明從哪來
 
@@ -47,7 +50,10 @@
 | Python | `3.14.7 · 3.13.6 · 3.12.12 · 3.9.6`（PATH 上的預設直譯器排第一） |
 | Node.js | `24.12.0 · 22.19.0`（nvm 目前使用中的排第一） |
 | Rust | `1.99.1`（預設 toolchain） |
-| 語言執行環境 | `Java 25.0.3 · .NET 9.0.304 · PHP 8.4.11 · Ruby 2.6.10p210` |
+| Java | `25.0.3` |
+| .NET | `9.0.304`（SDK） |
+| PHP | `8.4.11` |
+| Ruby | `2.6.10p210`（gem 掛在這個分類下） |
 | 系統工具 | 沒有單一版本，改顯示分類說明 |
 
 工具列有「收合全部分類／展開全部分類」一次切換。**有搜尋關鍵字或狀態篩選時會強制展開**，免得命中結果藏在收合的分類裡。
@@ -63,7 +69,7 @@
 | 可更新至 X | 問過了，上游有 X（琥珀色） |
 | 不檢查這個分類的版本 | 語言執行環境、系統工具沒有做線上比對，這行不會變 |
 
-只有 **Homebrew、Python、Node.js、Rust** 四個分類有線上比對（`brew outdated --json=v2`、`pip list --outdated`、`npm outdated -g --json`、`rustup check`）；語言執行環境（Java／.NET／PHP／Ruby／gem）與系統工具只列本機版本，不會打線上。
+只有 **Homebrew、Python、Node.js、Rust** 四個分類有線上比對（`brew outdated --json=v2`、`pip list --outdated`、`npm outdated -g --json`、`rustup check`）；**Java、.NET、PHP、Ruby、系統工具**只列本機版本，不會打線上，所以那幾類永遠顯示「不檢查這個分類的版本」。
 
 表格用顏色表示同一件事：**琥珀色**＝有新版、灰綠小點＝已最新、空心灰點＝還沒比對。**pip 有 300 多個套件，檢查可能要幾十秒到一兩分鐘**，所以做成按鈕而不是開場自動跑。
 
