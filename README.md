@@ -210,6 +210,36 @@ npm run dev          # 然後開 http://127.0.0.1:5173/preview.html
 | `Esc` | 清除選取／關閉面板 |
 | `↑` `↓` | 在表格列之間移動焦點 |
 
+## Windows 版
+
+程式碼已跨平台化，Windows 安裝檔由 GitHub Actions 產出（Tauri 無法從 macOS 交叉編譯）：
+
+```
+GitHub → Actions → build → 最新的 run → Artifacts
+  envbench-windows  → .msi / .exe（NSIS）
+  envbench-macos    → .app / .dmg
+```
+
+### 平台差異
+
+| 項目 | macOS | Windows |
+|---|---|---|
+| PATH／家目錄 | `$HOME`、`:` 分隔、`/opt/homebrew/bin` 等 | `%USERPROFILE%`、`;` 分隔、`%APPDATA%\npm`、`%LOCALAPPDATA%\Programs\Python`、`C:\Program Files\nodejs` |
+| 指令解析 | `which` 找無副檔名執行檔 | 額外嘗試 `.exe` / `.cmd` / `.bat`（例如 `npm.cmd`） |
+| Homebrew 分類 | 完整支援 | 不存在 → 整個分類隱藏 |
+| Java | `java_home -V` + PATH | PATH 的 `java -version` |
+| Node 版本 | `~/.nvm/versions/node/*` | `%APPDATA%\nvm\v*`（nvm-windows） |
+| 逾時終止 | `kill -9` | `taskkill /F /T /PID` |
+| 展匯出時間戳 | `date` | PowerShell `Get-Date` |
+| 標題列 | 自訂（`titleBarStyle: Overlay`） | 系統原生標題列（我們的自訂列在它下面） |
+| 快捷鍵顯示 | `⌘R` | `Ctrl+R` |
+
+### 已知限制
+
+- **我沒有 Windows 機器可實跑**：Windows 版只經過 CI 的編譯、測試、打包驗證，UI 與各掃描器在 Windows 上的實際行為尚未實機確認。
+- 系統工具清單（git/curl/ffmpeg…）在 Windows 上只會列出實際存在且支援 `--version` 的項目。
+- 匯出重建清單的 `Brewfile` 在 Windows 不存在（沒有 Homebrew），其餘檔案照常。
+
 ## 移除
 
 `scripts/uninstall.sh` 預設**只列清單、什麼都不刪**，加 `--yes` 才動手：
