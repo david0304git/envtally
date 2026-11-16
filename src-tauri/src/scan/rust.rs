@@ -55,7 +55,7 @@ pub fn scan() -> Result<Part, String> {
                 .cmd(format!("rustup update {name}"))
                 .rm(format!("rustup toolchain uninstall {name}"));
             if is_default {
-                item = item.note("預設 toolchain");
+                item = item.note_i18n("預設 toolchain", "note.rust.default", &[]);
             }
             part.items.push(item);
             found = true;

@@ -70,7 +70,7 @@ pub fn scan() -> Result<Part, String> {
             .cmd(format!("nvm use {dir_name}"))
             .rm(format!("nvm uninstall {dir_name}"));
         if is_active {
-            item = item.note("目前 PATH 使用中");
+            item = item.note_i18n("目前 PATH 使用中", "note.node.active", &[]);
         }
         ordered.push((is_active, version.clone()));
         part.items.push(item);

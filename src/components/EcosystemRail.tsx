@@ -1,15 +1,10 @@
 import { useMemo, useState } from "react";
-import { ALL_SCOPE, type SortDir } from "../rows";
+import { useT } from "../i18nContext";
+import { ALL_SCOPE, ecoBlurb, ecoLabel, type SortDir } from "../rows";
 import type { Ecosystem } from "../types";
 import EcosystemIcon from "./EcosystemIcon";
 
 type RailSort = "default" | "name" | "count";
-
-const SORTS: Array<{ id: RailSort; label: string }> = [
-  { id: "default", label: "預設" },
-  { id: "name", label: "名稱" },
-  { id: "count", label: "件數" },
-];
 
 interface Props {
   ecosystems: Ecosystem[];
@@ -20,9 +15,18 @@ interface Props {
 }
 
 export default function EcosystemRail({ ecosystems, counts, scope, total, onSelect }: Props) {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<RailSort>("default");
   const [dir, setDir] = useState<SortDir>("asc");
+
+  const sorts: Array<{ id: RailSort; label: string }> = [
+    { id: "default", label: t("rail.sort.default") },
+    { id: "name", label: t("rail.sort.name") },
+    { id: "count", label: t("rail.sort.count") },
+  ];
+
+  const max = Math.max(1, ...ecosystems.map((eco) => counts.get(eco.id)?.total ?? 0));
 
   // 同一選項再按一次就反向；換選項從遞增開始
   const chooseSort = (id: RailSort) => {
@@ -39,8 +43,6 @@ export default function EcosystemRail({ ecosystems, counts, scope, total, onSele
     setDir("asc");
   };
 
-  const max = Math.max(1, ...ecosystems.map((eco) => counts.get(eco.id)?.total ?? 0));
-
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     let list = ecosystems;
@@ -48,14 +50,16 @@ export default function EcosystemRail({ ecosystems, counts, scope, total, onSele
     if (needle) {
       // 分類名稱、說明、環境版本都能拿來找（例如打 3.14 可以找到 Python）
       list = list.filter((eco) =>
-        [eco.label, eco.blurb, eco.headline ?? ""].some((field) =>
-          field.toLowerCase().includes(needle),
+        [ecoLabel(eco.id, eco.label, t), ecoBlurb(eco.id, eco.blurb, t), eco.headline ?? ""].some(
+          (field) => field.toLowerCase().includes(needle),
         ),
       );
     }
 
     if (sort === "name") {
-      list = [...list].sort((a, b) => a.label.localeCompare(b.label, "zh-Hant"));
+      list = [...list].sort((a, b) =>
+        ecoLabel(a.id, a.label, t).localeCompare(ecoLabel(b.id, b.label, t), "zh-Hant"),
+      );
     } else if (sort === "count") {
       const size = (id: string) => counts.get(id)?.total ?? 0;
       list = [...list].sort((a, b) => size(a.id) - size(b.id));
@@ -63,27 +67,27 @@ export default function EcosystemRail({ ecosystems, counts, scope, total, onSele
       return list;
     }
     return dir === "desc" ? [...list].reverse() : list;
-  }, [ecosystems, query, sort, dir, counts]);
+  }, [ecosystems, query, sort, dir, counts, t]);
 
   return (
-    <nav className="rail" aria-label="分類">
+    <nav className="rail" aria-label={t("rail.sort")}>
       <div className="rail-tools">
         <div className="rail-search">
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="篩選分類"
-            aria-label="篩選分類"
+            placeholder={t("rail.filter")}
+            aria-label={t("rail.filter")}
             spellCheck={false}
           />
           {query.length > 0 && (
-            <button type="button" onClick={() => setQuery("")} aria-label="清除篩選">
+            <button type="button" onClick={() => setQuery("")} aria-label={t("rail.clear")}>
               ×
             </button>
           )}
         </div>
-        <div className="rail-sort" role="group" aria-label="分類排序">
-          {SORTS.map((option) => (
+        <div className="rail-sort" role="group" aria-label={t("rail.sort")}>
+          {sorts.map((option) => (
             <button
               key={option.id}
               type="button"
@@ -105,8 +109,9 @@ export default function EcosystemRail({ ecosystems, counts, scope, total, onSele
         type="button"
         className={`rail-item ${scope === ALL_SCOPE ? "is-active" : ""}`}
         onClick={() => onSelect(ALL_SCOPE)}
+        title={t("shortcut.allScope")}
       >
-        <span className="rail-label">全部</span>
+        <span className="rail-label">{t("rail.all")}</span>
         <EcosystemIcon id="all" />
         <span className="rail-count">{total}</span>
         <span className="rail-bar">
@@ -114,7 +119,7 @@ export default function EcosystemRail({ ecosystems, counts, scope, total, onSele
         </span>
       </button>
 
-      {visible.length === 0 && <p className="rail-empty">沒有符合的分類</p>}
+      {visible.length === 0 && <p className="rail-empty">{t("rail.empty")}</p>}
 
       {visible.map((eco) => {
         const stat = counts.get(eco.id) ?? { total: 0, outdated: 0 };
@@ -126,9 +131,9 @@ export default function EcosystemRail({ ecosystems, counts, scope, total, onSele
             type="button"
             className={`rail-item ${scope === eco.id ? "is-active" : ""}`}
             onClick={() => onSelect(eco.id)}
-            title={eco.error ?? eco.blurb}
+            title={eco.error ?? ecoBlurb(eco.id, eco.blurb, t)}
           >
-            <span className="rail-label">{eco.label}</span>
+            <span className="rail-label">{ecoLabel(eco.id, eco.label, t)}</span>
             <EcosystemIcon id={eco.id} />
             <span className="rail-count">
               {stat.total}

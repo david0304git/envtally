@@ -1,4 +1,5 @@
 import type { RefObject } from "react";
+import { useT } from "../i18nContext";
 import type { StatusFilter } from "../rows";
 
 interface Props {
@@ -15,13 +16,6 @@ interface Props {
   allGroupsCollapsed: boolean;
 }
 
-const FILTERS: Array<{ id: StatusFilter; label: string }> = [
-  { id: "all", label: "全部" },
-  { id: "outdated", label: "需更新" },
-  { id: "current", label: "已最新" },
-  { id: "unknown", label: "未檢查" },
-];
-
 export default function Toolbar({
   inputRef,
   query,
@@ -34,6 +28,15 @@ export default function Toolbar({
   onToggleGroups,
   allGroupsCollapsed,
 }: Props) {
+  const t = useT();
+
+  const filters: Array<{ id: StatusFilter; label: string }> = [
+    { id: "all", label: t("filter.all") },
+    { id: "outdated", label: t("filter.outdated") },
+    { id: "current", label: t("filter.current") },
+    { id: "unknown", label: t("filter.unknown") },
+  ];
+
   return (
     <div className="sheet-toolbar">
       <div className="search">
@@ -45,19 +48,24 @@ export default function Toolbar({
           ref={inputRef}
           value={query}
           onChange={(event) => onQuery(event.target.value)}
-          placeholder="搜尋名稱、版本、來源"
+          placeholder={t("search.placeholder")}
           spellCheck={false}
-          aria-label="搜尋"
+          aria-label={t("search.placeholder")}
         />
         {query.length > 0 && (
-          <button type="button" className="search-clear" onClick={() => onQuery("")} aria-label="清除搜尋">
+          <button
+            type="button"
+            className="search-clear"
+            onClick={() => onQuery("")}
+            aria-label={t("search.clear")}
+          >
             ×
           </button>
         )}
       </div>
 
-      <div className="seg" role="group" aria-label="狀態篩選">
-        {FILTERS.map((entry) => (
+      <div className="seg" role="group" aria-label={t("filter.all")}>
+        {filters.map((entry) => (
           <button
             key={entry.id}
             type="button"
@@ -71,13 +79,15 @@ export default function Toolbar({
 
       {onToggleGroups && (
         <button type="button" className="btn btn--ghost" onClick={onToggleGroups}>
-          {allGroupsCollapsed ? "展開全部分類" : "收合全部分類"}
+          {allGroupsCollapsed ? t("groups.expand") : t("groups.collapse")}
         </button>
       )}
 
       <span className="count-note">
-        {checkedAt === null && <span className="check-hint">版本未檢查 · </span>}
-        {shown === total ? `${total} 項` : `${shown} / ${total}`}
+        {checkedAt === null && <span className="check-hint">{t("count.unchecked")}</span>}
+        {shown === total
+          ? t("count.items", { n: total })
+          : t("count.partial", { shown, total })}
       </span>
     </div>
   );

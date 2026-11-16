@@ -312,6 +312,18 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "寫檔案（工作區內）"]
+    fn real_export_bundle() {
+        let inventory = collect();
+        let base = std::path::Path::new("target/export-test");
+        for lang in ["zh-TW", "en"] {
+            let result =
+                crate::export::write_bundle_at(&inventory, lang, base).expect("匯出失敗");
+            println!("[{lang}] {} → {:?}", result.folder, result.files);
+        }
+    }
+
+    #[test]
     #[ignore = "需要本機環境"]
     fn real_scan_finds_items() {
         let inv = collect();

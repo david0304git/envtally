@@ -1,3 +1,6 @@
+import type { Lang } from "./i18n";
+import { localeOf } from "./i18n";
+import type { T } from "./i18nContext";
 import type { Ecosystem, Item, Status, Updates } from "./types";
 
 export const ALL_SCOPE = "all";
@@ -27,34 +30,56 @@ export type ViewRow =
     }
   | { type: "item"; row: Row };
 
-const KIND_LABEL: Record<string, string> = {
-  runtime: "執行環境",
-  toolchain: "工具鏈",
-  formula: "套件",
-  cask: "應用程式",
-  package: "套件",
-  gem: "Gem",
-  sdk: "SDK",
-  binary: "執行檔",
-  tool: "工具",
+const KIND_KEY: Record<string, string> = {
+  runtime: "kind.runtime",
+  toolchain: "kind.toolchain",
+  formula: "kind.package",
+  cask: "kind.cask",
+  package: "kind.package",
+  gem: "kind.gem",
+  sdk: "kind.sdk",
+  binary: "kind.binary",
+  tool: "kind.tool",
 };
 
-export function kindLabel(kind: string): string {
-  return KIND_LABEL[kind] ?? kind;
+/** 回傳 i18n key（呼叫端用 t() 翻） */
+export function kindKey(kind: string): string {
+  return KIND_KEY[kind] ?? kind;
 }
 
-export function statusLabel(status: Status, latest: string | null, checkable: boolean): string {
+export function kindLabel(kind: string, t: T): string {
+  const key = KIND_KEY[kind];
+  return key ? t(key) : kind;
+}
+
+/** 分類名稱：優先用字典（三語），沒有就用後端給的標籤 */
+export function ecoLabel(id: string, label: string, t: T): string {
+  const key = `eco.${id}`;
+  const translated = t(key);
+  return translated === key ? label : translated;
+}
+
+export function ecoBlurb(id: string, blurb: string, t: T): string {
+  const key = `eco.${id}.blurb`;
+  const translated = t(key);
+  return translated === key ? blurb : translated;
+}
+
+export function statusLabel(
+  status: Status,
+  latest: string | null,
+  checkable: boolean,
+  t: T,
+): string {
   switch (status) {
     case "outdated":
-      return latest ? `可更新至 ${latest}` : "可更新";
+      return latest ? t("status.outdated", { version: latest }) : t("status.outdatedPlain");
     case "current":
-      return "已是最新";
+      return t("status.current");
     case "error":
-      return "讀取失敗";
+      return t("status.error");
     default:
-      return checkable
-        ? "還沒比對上游版本（按「檢查更新」）"
-        : "不檢查這個分類的版本";
+      return checkable ? t("status.unknown") : t("status.notCheckable");
   }
 }
 
@@ -104,7 +129,8 @@ export function compareRows(a: Row, b: Row, sort: SortKey): number {
     case "source":
       return naturalCompare(a.source, b.source) || byName();
     case "kind":
-      return naturalCompare(kindLabel(a.kind), kindLabel(b.kind)) || byName();
+      // 用原始 kind 排（不受介面語言影響）
+      return naturalCompare(a.kind, b.kind) || byName();
     default:
       return byName();
   }
@@ -152,8 +178,8 @@ export function buildView(
   return view;
 }
 
-export function formatTime(ms: number): string {
-  return new Intl.DateTimeFormat("zh-TW", {
+export function formatTime(ms: number, lang: Lang): string {
+  return new Intl.DateTimeFormat(localeOf(lang), {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",

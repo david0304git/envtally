@@ -1,24 +1,79 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { checkUpdates, scanLocal } from "./api";
+import { checkUpdates, exportRebuild, revealInFinder, scanLocal } from "./api";
 import EcosystemRail from "./components/EcosystemRail";
 import Inspector from "./components/Inspector";
 import InventoryTable from "./components/InventoryTable";
 import SpecPlate from "./components/SpecPlate";
 import Toolbar from "./components/Toolbar";
+import { LANGS, type Lang } from "./i18n";
+import { LangProvider, useT } from "./i18nContext";
 import {
   ALL_SCOPE,
   buildView,
+  ecoLabel,
   formatTime,
-  kindLabel,
+  kindKey,
   resolveRows,
   type Row,
   type SortDir,
   type SortKey,
   type StatusFilter,
 } from "./rows";
-import type { Inventory, Updates } from "./types";
+import { SettingsContext, useSettings, type SettingsValue } from "./settings";
+import type { ExportResult, Inventory, Updates } from "./types";
+import {
+  applyThemeMode,
+  readLang,
+  readThemeMode,
+  saveLang,
+  saveThemeMode,
+  type ThemeMode,
+} from "./theme";
 
 export default function App() {
+  const [lang, setLangState] = useState<Lang>(readLang);
+  const [theme, setThemeState] = useState<ThemeMode>(readThemeMode);
+
+  const setLang = useCallback((next: Lang) => {
+    setLangState(next);
+    saveLang(next);
+  }, []);
+  const setTheme = useCallback((next: ThemeMode) => {
+    setThemeState(next);
+    saveThemeMode(next);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  useEffect(() => {
+    applyThemeMode(theme);
+    if (theme !== "auto" || !window.matchMedia) return;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => applyThemeMode("auto");
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, [theme]);
+
+  const settings = useMemo<SettingsValue>(
+    () => ({ lang, theme, setLang, setTheme }),
+    [lang, theme, setLang, setTheme],
+  );
+
+  return (
+    <SettingsContext.Provider value={settings}>
+      <LangProvider lang={lang}>
+        <Workspace />
+      </LangProvider>
+    </SettingsContext.Provider>
+  );
+}
+
+function Workspace() {
+  const t = useT();
+  const { lang, theme, setLang, setTheme } = useSettings();
+
   const [inventory, setInventory] = useState<Inventory | null>(null);
   const [scanning, setScanning] = useState(true);
   const [scanError, setScanError] = useState<string | null>(null);
@@ -35,7 +90,14 @@ export default function App() {
   const [showWarnings, setShowWarnings] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [toast, setToast] = useState<
+    { kind: "ok"; result: ExportResult } | { kind: "error"; message: string } | null
+  >(null);
+
   const searchRef = useRef<HTMLInputElement>(null);
+  const settingsRef = useRef<HTMLDivElement>(null);
 
   const scan = useCallback(async () => {
     setScanning(true);
@@ -70,12 +132,84 @@ export default function App() {
     }
   }, []);
 
+  const runExport = useCallback(async () => {
+    if (!inventory || exporting) return;
+    setExporting(true);
+    try {
+      const result = await exportRebuild(inventory, lang);
+      setToast({ kind: "ok", result });
+    } catch (error) {
+      setToast({ kind: "error", message: error instanceof Error ? error.message : String(error) });
+    } finally {
+      setExporting(false);
+    }
+  }, [inventory, exporting, lang]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 15000);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
+  useEffect(() => {
+    if (!settingsOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (!settingsRef.current?.contains(event.target as Node)) setSettingsOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [settingsOpen]);
+
+  const ecosystems = inventory?.ecosystems ?? [];
+
+  const scopeOrder = useMemo(
+    () => [ALL_SCOPE, ...ecosystems.map((eco) => eco.id)],
+    [ecosystems],
+  );
+
+  const cycleScope = useCallback(
+    (delta: number) => {
+      setScope((current) => {
+        const index = scopeOrder.indexOf(current);
+        const next = (index + delta + scopeOrder.length) % scopeOrder.length;
+        return scopeOrder[next] ?? ALL_SCOPE;
+      });
+    },
+    [scopeOrder],
+  );
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       const typing = target instanceof HTMLInputElement || target instanceof HTMLSelectElement;
+      const meta = event.metaKey || event.ctrlKey;
 
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "f") {
+      if (meta && event.key.toLowerCase() === "r") {
+        event.preventDefault();
+        void scan();
+        return;
+      }
+      if (meta && event.key.toLowerCase() === "u") {
+        event.preventDefault();
+        void runCheck();
+        return;
+      }
+      if (meta && event.key.toLowerCase() === "e") {
+        event.preventDefault();
+        void runExport();
+        return;
+      }
+      if (meta && (event.key === "[" || event.key === "]")) {
+        event.preventDefault();
+        cycleScope(event.key === "]" ? 1 : -1);
+        return;
+      }
+      if (meta && event.key === "0") {
+        event.preventDefault();
+        setScope(ALL_SCOPE);
+        return;
+      }
+      if (meta && event.key.toLowerCase() === "f") {
         event.preventDefault();
         searchRef.current?.focus();
         searchRef.current?.select();
@@ -87,6 +221,10 @@ export default function App() {
         return;
       }
       if (event.key === "Escape") {
+        if (settingsOpen) {
+          setSettingsOpen(false);
+          return;
+        }
         if (typing) {
           setQuery("");
           searchRef.current?.blur();
@@ -97,15 +235,10 @@ export default function App() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
-
-  const ecosystems = inventory?.ecosystems ?? [];
+  }, [scan, runCheck, runExport, cycleScope, settingsOpen]);
 
   const checkableEcosystems = useMemo(
-    () =>
-      new Set(
-        ecosystems.filter((eco) => eco.checkable).map((eco) => eco.id),
-      ),
+    () => new Set(ecosystems.filter((eco) => eco.checkable).map((eco) => eco.id)),
     [ecosystems],
   );
 
@@ -142,7 +275,7 @@ export default function App() {
     }
     if (needle) {
       rows = rows.filter((row) =>
-        [row.name, row.version, row.source, kindLabel(row.kind)].some((field) =>
+        [row.name, row.version, row.source, t(kindKey(row.kind))].some((field) =>
           field.toLowerCase().includes(needle),
         ),
       );
@@ -151,7 +284,7 @@ export default function App() {
       rows = rows.filter((row) => row.statusResolved === filter);
     }
     return rows;
-  }, [allRows, scope, query, filter]);
+  }, [allRows, scope, query, filter, t]);
 
   // 有搜尋或篩選時強制展開，否則命中結果會藏在收合的分類裡
   const forceExpand = query.trim() !== "" || filter !== "all";
@@ -209,14 +342,15 @@ export default function App() {
   const warnings = useMemo(() => {
     const list: string[] = [];
     for (const eco of ecosystems) {
-      if (eco.error) list.push(`${eco.label}：${eco.error}`);
-      for (const warning of eco.warnings) list.push(`${eco.label}：${warning}`);
+      const label = ecoLabel(eco.id, eco.label, t);
+      if (eco.error) list.push(`${label}：${eco.error}`);
+      for (const warning of eco.warnings) list.push(`${label}：${warning}`);
     }
     for (const warning of updates?.warnings ?? []) list.push(warning);
-    if (scanError) list.push(`掃描失敗：${scanError}`);
-    if (checkError) list.push(`版本檢查失敗：${checkError}`);
+    if (scanError) list.push(`scan: ${scanError}`);
+    if (checkError) list.push(`check: ${checkError}`);
     return list;
-  }, [ecosystems, updates, scanError, checkError]);
+  }, [ecosystems, updates, scanError, checkError, t]);
 
   const scopeTotal = scope === ALL_SCOPE ? allRows.length : (counts.get(scope)?.total ?? 0);
 
@@ -230,27 +364,96 @@ export default function App() {
         <div className="chrome-actions">
           <button
             type="button"
+            className="btn"
+            onClick={() => void runExport()}
+            disabled={!inventory || exporting}
+            title={`${t("export.tooltip")} · ${t("shortcut.export")}`}
+          >
+            {exporting ? t("chrome.exporting") : t("chrome.export")}
+          </button>
+          <button
+            type="button"
             className="btn btn--primary"
             onClick={() => void scan()}
             disabled={scanning}
+            title={t("shortcut.scan")}
           >
-            {scanning ? "掃描中…" : "重新掃描"}
+            {scanning ? t("chrome.scanning") : t("chrome.scan")}
           </button>
           <button
             type="button"
             className="btn"
             onClick={() => void runCheck()}
             disabled={!inventory || scanning || checking}
-            title="連到 Homebrew / npm / PyPI / rustup 查最新版本"
+            title={t("shortcut.check")}
           >
-            {checking ? "檢查中…" : "檢查更新"}
+            {checking ? t("chrome.checking") : t("chrome.check")}
           </button>
+          <div className="settings-wrap" ref={settingsRef}>
+            <button
+              type="button"
+              className="btn btn--icon"
+              onClick={() => setSettingsOpen((open) => !open)}
+              aria-label={t("chrome.settings")}
+              aria-expanded={settingsOpen}
+              title={t("chrome.settings")}
+            >
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <circle cx="7" cy="7" r="2.2" stroke="currentColor" strokeWidth="1.3" />
+                <path
+                  d="M7 1.6v1.5M7 10.9v1.5M1.6 7h1.5M10.9 7h1.5M3.2 3.2l1 1M9.8 9.8l1 1M10.8 3.2l-1 1M4.2 9.8l-1 1"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+            {settingsOpen && (
+              <div className="settings" role="dialog" aria-label={t("settings.title")}>
+                <p className="settings-title">{t("settings.title")}</p>
+                <div className="settings-row">
+                  <span className="settings-label">{t("settings.appearance")}</span>
+                  <div className="seg seg--sm">
+                    {(["auto", "light", "dark"] as ThemeMode[]).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        className={theme === mode ? "is-active" : ""}
+                        onClick={() => setTheme(mode)}
+                      >
+                        {t(`settings.${mode}`)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="settings-row">
+                  <span className="settings-label">{t("settings.language")}</span>
+                  <div className="seg seg--sm">
+                    {LANGS.map((option) => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        className={lang === option.id ? "is-active" : ""}
+                        onClick={() => setLang(option.id)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
       <SpecPlate inventory={inventory} total={allRows.length} outdated={outdatedTotal} />
 
-      <div className={`scan-bar ${scanning ? "is-busy" : "is-idle"}`} role="progressbar" aria-label="正在掃描">
+      <div
+        className={`scan-bar ${scanning ? "is-busy" : "is-idle"}`}
+        role="progressbar"
+        aria-label={t("chrome.scanning")}
+      >
         <i />
       </div>
 
@@ -284,7 +487,8 @@ export default function App() {
                 className="warnings-toggle"
                 onClick={() => setShowWarnings((value) => !value)}
               >
-                {warnings.length} 則讀取警告{showWarnings ? "，收合" : "，展開"}
+                {t("warnings.summary", { n: warnings.length })}
+                {showWarnings ? t("warnings.collapse") : t("warnings.expand")}
               </button>
               {showWarnings && (
                 <ul>
@@ -306,7 +510,7 @@ export default function App() {
             onSort={handleSort}
             scanning={scanning}
             hasInventory={inventory !== null}
-            emptyHint={query.trim() || filter !== "all" ? "沒有符合條件的項目" : "這個分類目前是空的"}
+            hasFilter={query.trim() !== "" || filter !== "all"}
           />
         </section>
 
@@ -314,15 +518,51 @@ export default function App() {
       </div>
 
       <footer className="footer">
-        <span>只讀模式，不會改動任何系統狀態</span>
+        <span>{t("footer.readonly")}</span>
         <span className="spacer" />
-        {checking && <span className="footer-busy">正在向 Homebrew / npm / PyPI / rustup 查詢版本…</span>}
+        {checking && <span className="footer-busy">{t("footer.checking")}</span>}
         {updates && !checking && (
-          <span className="mono">版本檢查 {formatTime(updates.checkedAtMs)}</span>
+          <span className="mono">
+            {t("footer.checkAt", { time: formatTime(updates.checkedAtMs, lang) })}
+          </span>
         )}
-        {inventory && <span className="mono">掃描 {formatTime(inventory.scannedAtMs)}</span>}
-        <span className="mono">{ecosystems.length} 個生態系</span>
+        {inventory && (
+          <span className="mono">
+            {t("footer.scanAt", { time: formatTime(inventory.scannedAtMs, lang) })}
+          </span>
+        )}
+        <span className="mono">{t("footer.ecosystems", { n: ecosystems.length })}</span>
       </footer>
+
+      {toast && (
+        <div className={`toast ${toast.kind === "ok" ? "" : "is-error"}`} role="status">
+          {toast.kind === "ok" ? (
+            <>
+              <span className="toast-text">
+                {t("export.done", { path: toast.result.folder })}
+              </span>
+              <span className="toast-files mono">{toast.result.files.join(" · ")}</span>
+              <button
+                type="button"
+                className="btn btn--tiny"
+                onClick={() => void revealInFinder(toast.result.folder)}
+              >
+                {t("export.reveal")}
+              </button>
+            </>
+          ) : (
+            <span className="toast-text">{t("export.failed", { message: toast.message })}</span>
+          )}
+          <button
+            type="button"
+            className="toast-close"
+            onClick={() => setToast(null)}
+            aria-label={t("insp.close")}
+          >
+            ×
+          </button>
+        </div>
+      )}
     </div>
   );
 }

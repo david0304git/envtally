@@ -57,12 +57,12 @@ pub fn java() -> Result<Part, String> {
             )
             .kind("runtime")
             .about("Java 執行環境（JDK）：跑 Java 程式、也提供編譯工具")
-            .note("由 JDK 安裝器管理，升級需重新安裝");
+            .note_i18n("由 JDK 安裝器管理，升級需重新安裝", "note.java.managed", &[]);
             if let Some(home) = home {
                 item = item.at(home);
             }
             if let Some(arch) = arch {
-                item = item.note(format!("{arch} 架構"));
+                item = item.note_i18n(&format!("{arch} 架構"), "note.java.arch", &[&arch]);
             }
             part.items.push(item);
             found = true;
@@ -241,7 +241,11 @@ pub fn ruby() -> Result<Part, String> {
             .kind("runtime")
             .at(path_str)
             .about("Ruby 直譯器：macOS 內建版本，系統工具（如 CocoaPods）會用到")
-            .note("macOS 內建；要新版請用 brew install ruby，不要直接替換系統 Ruby"),
+            .note_i18n(
+                "macOS 內建；要新版請用 brew install ruby，不要直接替換系統 Ruby",
+                "note.ruby.builtin",
+                &[],
+            ),
     );
 
     let summaries = gem_summaries();
@@ -275,7 +279,11 @@ pub fn ruby() -> Result<Part, String> {
                 }
                 if is_default {
                     // default gem 動了會拖累系統 Ruby，不提供移除指令
-                    item = item.note("Ruby 內建 default gem（更新通常需要 sudo，不建議動）");
+                    item = item.note_i18n(
+                        "Ruby 內建 default gem（更新通常需要 sudo，不建議動）",
+                        "note.gem.default",
+                        &[],
+                    );
                 } else {
                     item = item.rm(format!("gem uninstall {name}"));
                 }

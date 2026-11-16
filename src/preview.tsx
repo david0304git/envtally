@@ -59,6 +59,14 @@ async function bootstrap() {
     invoke: async (command: string) => {
       if (command === "scan_local") return inventory;
       if (command === "check_updates") return updates;
+      if (command === "export_rebuild") {
+        return {
+          folder: "/tmp/version-manager-preview/export",
+          files: ["Brewfile", "requirements-Python-3.13.6.txt", "REBUILD.md"],
+          itemCount: 0,
+        };
+      }
+      if (command === "reveal_in_finder") return null;
       return null;
     },
   };
@@ -68,13 +76,21 @@ async function bootstrap() {
 
   const params = new URLSearchParams(window.location.search);
 
-  // ?checked=1 自動觸發一次版本檢查，方便看「需更新」的樣式
+  // ?theme=light|dark|auto / ?lang=zh-TW|zh-CN|en 直接寫進 localStorage（App 啟動時會讀）
+  const themeParam = params.get("theme");
+  if (themeParam === "light" || themeParam === "dark" || themeParam === "auto") {
+    localStorage.setItem("version-manager.theme", themeParam);
+  }
+  const langParam = params.get("lang");
+  if (langParam === "zh-TW" || langParam === "zh-CN" || langParam === "en") {
+    localStorage.setItem("version-manager.lang", langParam);
+  }
+
+  // ?checked=1 自動觸發一次版本檢查（用 title 裡的 ⌘U 找按鈕，不受語言影響）
   if (params.get("checked") === "1") {
     window.setTimeout(() => {
-      const button = Array.from(document.querySelectorAll("button")).find((element) =>
-        element.textContent?.includes("檢查更新"),
-      );
-      button?.click();
+      const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>(".chrome-actions .btn"));
+      buttons.find((element) => element.title.includes("⌘U"))?.click();
     }, 400);
   }
 
@@ -89,10 +105,11 @@ async function bootstrap() {
       source: "來源",
       kind: "類型",
     };
+    const order = ["name", "version", "latest", "source", "kind"];
     window.setTimeout(() => {
-      const button = Array.from(document.querySelectorAll<HTMLButtonElement>(".h-sort")).find(
-        (element) => element.textContent?.includes(labels[key] ?? key),
-      );
+      const columns = Array.from(document.querySelectorAll<HTMLButtonElement>(".h-sort"));
+      const button = columns[Math.max(0, order.indexOf(key))];
+      void labels; // 保留 labels 供除錯時對照
       button?.click();
       if (dir === "desc") window.setTimeout(() => button?.click(), 150);
     }, 500);
@@ -102,23 +119,25 @@ async function bootstrap() {
   const railSortParam = params.get("railsort");
   if (railSortParam) {
     const [key, dir] = railSortParam.split(":");
-    const labels: Record<string, string> = { name: "名稱", count: "件數" };
     window.setTimeout(() => {
-      const button = Array.from(document.querySelectorAll<HTMLButtonElement>(".rail-sort button")).find(
-        (element) => element.textContent?.includes(labels[key] ?? key),
-      );
+      const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>(".rail-sort button"));
+      const button = buttons[key === "count" ? 2 : 1];
       button?.click();
       if (dir === "desc") window.setTimeout(() => button?.click(), 150);
+    }, 500);
+  }
+
+  // ?settings=1 打開設定面板
+  if (params.get("settings") === "1") {
+    window.setTimeout(() => {
+      document.querySelector<HTMLButtonElement>(".btn--icon")?.click();
     }, 500);
   }
 
   // ?collapsed=1 自動按下「收合全部分類」，看環境版本總覽
   if (params.get("collapsed") === "1") {
     window.setTimeout(() => {
-      const button = Array.from(document.querySelectorAll("button")).find((element) =>
-        element.textContent?.includes("收合全部分類"),
-      );
-      button?.click();
+      document.querySelector<HTMLButtonElement>(".sheet-toolbar .btn--ghost")?.click();
     }, 500);
   }
 

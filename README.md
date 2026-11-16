@@ -160,6 +160,42 @@ npm run dev          # 然後開 http://127.0.0.1:5173/preview.html
 
 注意：預覽模式的「有新版」版本號是人工加的（真實版本檢查要連網），只有清單本身是真實資料。
 
+## 外觀與語言
+
+右上角齒輪：**外觀**（自動／淺色／深色）與**語言**（繁體中文／简体中文／English）。設定存在 localStorage，下次開啟沿用；「自動」會跟隨 macOS 的深色模式。
+
+![深色模式 + English](docs/dark-en.png)
+
+介面全部三語；**上游套件說明**維持原文（多為英文），**讀取警告**也保留原始語言，因為內容常含指令的原始輸出。
+
+## 匯出重建清單
+
+右上角「匯出清單」（`⌘E`）會在 `~/Downloads/Version Manager/export-<時間>/` 產生一包可直接使用的檔案：
+
+| 檔案 | 內容 |
+|---|---|
+| `Brewfile` | Homebrew formula / cask → `brew bundle install --file=Brewfile` |
+| `requirements-Python-*.txt` | 每個 Python 直譯器一份 → `pip install -r …` |
+| `npm-globals.sh` | 全域 npm 套件 → `sh npm-globals.sh` |
+| `gems.sh` | Ruby gems → `sh gems.sh` |
+| `global.json` | .NET SDK 版本（`rollForward: latestPatch`） |
+| `REBUILD.md` | 上面全部的說明與指令，語言跟隨介面 |
+
+資料直接取自畫面上這份盤點結果（不是重新掃描），所以匯出的就是你看到的。匯出後可從提示條按「在 Finder 顯示」。
+
+## 鍵盤快捷鍵
+
+| 快捷鍵 | 動作 |
+|---|---|
+| `⌘R` | 重新掃描 |
+| `⌘U` | 檢查更新 |
+| `⌘E` | 匯出重建清單 |
+| `⌘F` 或 `/` | 搜尋 |
+| `⌘[` / `⌘]` | 上一個／下一個分類 |
+| `⌘0` | 全部 |
+| `Esc` | 清除選取／關閉面板 |
+| `↑` `↓` | 在表格列之間移動焦點 |
+
 ## 移除
 
 `scripts/uninstall.sh` 預設**只列清單、什麼都不刪**，加 `--yes` 才動手：
@@ -201,11 +237,15 @@ src/                     前端（React + TypeScript，無 UI 框架）
   components/            SpecPlate / EcosystemRail / Toolbar / InventoryTable / Inspector
   styles.css             全部樣式（設計語彙寫在檔案最上面）
   preview.tsx            瀏覽器預覽入口
+  i18n.ts / i18nDesc.ts  三語字典（介面字串 + 我自己撰稿的說明）
+  i18nContext.tsx        語言 context 與 useT()
+  theme.ts / settings.tsx 外觀（自動/淺/深）與語言的持久化
 src-tauri/
   src/models.rs          Item / Ecosystem / Inventory / Updates
   src/sh.rs              指令執行（自帶 PATH、逾時砍掉、找絕對路徑）
   src/scan/*.rs          每個生態系一個模組 + updates.rs（版本檢查）
-  src/lib.rs             Tauri command：scan_local / check_updates
+  src/export.rs          匯出重建清單（Brewfile / requirements / npm / gems / global.json / REBUILD.md）
+  src/lib.rs             Tauri command：scan_local / check_updates / export_rebuild / reveal_in_finder
   tauri.conf.json        視窗 1240×820、透明標題列、CSP 只允許自身資源
 docs/screenshot.png      README 用截圖
 ```

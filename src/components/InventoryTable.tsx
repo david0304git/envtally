@@ -1,15 +1,7 @@
 import { useRef } from "react";
 import type { KeyboardEvent } from "react";
-import { kindLabel, type SortDir, type SortKey, type ViewRow } from "../rows";
-
-const COLUMNS: Array<{ key: SortKey | null; label: string; className: string }> = [
-  { key: "name", label: "名稱", className: "h-name" },
-  { key: "version", label: "已安裝", className: "h-version" },
-  { key: "latest", label: "最新", className: "h-latest" },
-  { key: "source", label: "來源", className: "h-source" },
-  { key: "kind", label: "類型", className: "h-kind" },
-  { key: null, label: "備註", className: "h-note" },
-];
+import { useT } from "../i18nContext";
+import { ecoBlurb, ecoLabel, kindLabel, type SortDir, type SortKey, type ViewRow } from "../rows";
 
 interface Props {
   view: ViewRow[];
@@ -21,7 +13,7 @@ interface Props {
   onSort: (key: SortKey) => void;
   scanning: boolean;
   hasInventory: boolean;
-  emptyHint: string;
+  hasFilter: boolean;
 }
 
 export default function InventoryTable({
@@ -34,9 +26,19 @@ export default function InventoryTable({
   onSort,
   scanning,
   hasInventory,
-  emptyHint,
+  hasFilter,
 }: Props) {
+  const t = useT();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const columns: Array<{ key: SortKey | null; label: string; className: string }> = [
+    { key: "name", label: t("col.name"), className: "h-name" },
+    { key: "version", label: t("col.installed"), className: "h-version" },
+    { key: "latest", label: t("col.latest"), className: "h-latest" },
+    { key: "source", label: t("col.source"), className: "h-source" },
+    { key: "kind", label: t("col.kind"), className: "h-kind" },
+    { key: null, label: t("col.note"), className: "h-note" },
+  ];
 
   // 用 DOM 順序移動焦點，比維護一份索引狀態更不容易出錯
   const moveFocus = (event: KeyboardEvent<HTMLDivElement>, delta: number) => {
@@ -50,7 +52,7 @@ export default function InventoryTable({
     <div className="inv-scroll" ref={scrollRef}>
       <div className="inv-head" role="row">
         <span className="h-status" aria-hidden="true" />
-        {COLUMNS.map((column) =>
+        {columns.map((column) =>
           column.key === null ? (
             <span key={column.className} className={column.className}>
               {column.label}
@@ -61,7 +63,7 @@ export default function InventoryTable({
               type="button"
               className={`${column.className} h-sort ${sort === column.key ? "is-active" : ""}`}
               onClick={() => onSort(column.key as SortKey)}
-              aria-label={`依${column.label}排序，再按一次反向`}
+              aria-label={t("sort.aria", { label: column.label })}
             >
               {column.label}
               {sort === column.key && (
@@ -76,17 +78,21 @@ export default function InventoryTable({
 
       {!hasInventory && (
         <div className="inv-empty">
-          <p className="inv-empty-title">{scanning ? "正在讀取這台 Mac 的環境…" : "還沒有資料"}</p>
+          <p className="inv-empty-title">
+            {scanning ? t("empty.scanning.title") : t("empty.none.title")}
+          </p>
           <p className="inv-empty-body">
-            {scanning ? "依套件數量不同，通常需要 2–10 秒。" : "按右上角「重新掃描」再試一次。"}
+            {scanning ? t("empty.scanning.body") : t("empty.none.body")}
           </p>
         </div>
       )}
 
       {hasInventory && view.length === 0 && (
         <div className="inv-empty">
-          <p className="inv-empty-title">{emptyHint}</p>
-          <p className="inv-empty-body">換個關鍵字，或把狀態篩選切回「全部」。</p>
+          <p className="inv-empty-title">
+            {hasFilter ? t("empty.filtered.title") : t("empty.emptyGroup.title")}
+          </p>
+          <p className="inv-empty-body">{t("empty.filtered.body")}</p>
         </div>
       )}
 
@@ -99,7 +105,7 @@ export default function InventoryTable({
               className="group-row"
               onClick={() => onToggleGroup(entry.id)}
               aria-expanded={!entry.collapsed}
-              title={entry.blurb}
+              title={ecoBlurb(entry.id, entry.blurb, t)}
             >
               <svg
                 className={`group-caret ${entry.collapsed ? "" : "is-open"}`}
@@ -117,16 +123,18 @@ export default function InventoryTable({
                   strokeLinejoin="round"
                 />
               </svg>
-              <span className="group-label">{entry.label}</span>
+              <span className="group-label">{ecoLabel(entry.id, entry.label, t)}</span>
               {entry.headline ? (
                 <span className="group-version">{entry.headline}</span>
               ) : (
-                <span className="group-blurb">{entry.blurb}</span>
+                <span className="group-blurb">{ecoBlurb(entry.id, entry.blurb, t)}</span>
               )}
               <span className="group-flags">
-                {entry.outdated > 0 && <span className="group-warn">{entry.outdated} 需更新</span>}
+                {entry.outdated > 0 && (
+                  <span className="group-warn">{t("cell.groupOutdated", { n: entry.outdated })}</span>
+                )}
               </span>
-              <span className="group-count">{entry.count} 項</span>
+              <span className="group-count">{t("cell.groupItems", { n: entry.count })}</span>
             </button>
           );
         }
@@ -173,17 +181,22 @@ export default function InventoryTable({
               {row.latestResolved ? (
                 row.latestResolved
               ) : row.statusResolved === "current" ? (
-                <span className="cell-current">已最新</span>
+                <span className="cell-current">{t("cell.latest")}</span>
               ) : (
-                <span className="cell-faint">—</span>
+                <span className="cell-faint">{t("cell.none")}</span>
               )}
             </span>
             <span className="cell-source" title={row.source}>
               {row.source}
             </span>
-            <span className="cell-kind">{kindLabel(row.kind)}</span>
+            <span className="cell-kind">{kindLabel(row.kind, t)}</span>
             <span className="cell-note" title={row.note ?? undefined}>
-              {row.note}
+              {row.noteKey
+                ? t(
+                    row.noteKey,
+                    Object.fromEntries(row.noteArgs.map((value, index) => [String(index), value])),
+                  )
+                : row.note}
             </span>
           </div>
         );

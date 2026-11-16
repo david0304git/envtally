@@ -12,6 +12,8 @@ export interface Item {
   updateCommand: string | null;
   removeCommand: string | null;
   note: string | null;
+  noteKey: string | null;
+  noteArgs: string[];
   description: string | null;
   status: Status;
   latest: string | null;
@@ -48,4 +50,10 @@ export interface Updates {
   checkedEcosystems: string[];
   patches: Patch[];
   warnings: string[];
+}
+
+export interface ExportResult {
+  folder: string;
+  files: string[];
+  itemCount: number;
 }

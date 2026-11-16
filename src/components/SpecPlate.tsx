@@ -1,4 +1,6 @@
+import { useT } from "../i18nContext";
 import { formatTime } from "../rows";
+import { useSettings } from "../settings";
 import type { Inventory } from "../types";
 
 interface Props {
@@ -8,21 +10,24 @@ interface Props {
 }
 
 export default function SpecPlate({ inventory, total, outdated }: Props) {
+  const t = useT();
+  const { lang } = useSettings();
+
   return (
-    <section className="plate" aria-label="這台機器">
+    <section className="plate" aria-label="machine">
       <div className="plate-id">
-        <h1 className="plate-host">{inventory?.host ?? "正在辨識這台 Mac…"}</h1>
+        <h1 className="plate-host">{inventory?.host ?? t("plate.identifying")}</h1>
         <dl className="plate-specs">
           <div className="plate-spec">
-            <dt>機型</dt>
+            <dt>{t("plate.model")}</dt>
             <dd>{inventory?.model ?? "—"}</dd>
           </div>
           <div className="plate-spec">
-            <dt>系統</dt>
+            <dt>{t("plate.os")}</dt>
             <dd>macOS {inventory?.os ?? "—"}</dd>
           </div>
           <div className="plate-spec">
-            <dt>架構</dt>
+            <dt>{t("plate.arch")}</dt>
             <dd>{inventory?.arch ?? "—"}</dd>
           </div>
         </dl>
@@ -30,16 +35,18 @@ export default function SpecPlate({ inventory, total, outdated }: Props) {
 
       <dl className="plate-ledger">
         <div className="ledger-cell">
-          <dt>已盤點</dt>
+          <dt>{t("plate.items")}</dt>
           <dd>{total}</dd>
         </div>
         <div className="ledger-cell">
-          <dt>需更新</dt>
+          <dt>{t("plate.outdated")}</dt>
           <dd className={outdated > 0 ? "is-warn" : ""}>{outdated}</dd>
         </div>
         <div className="ledger-cell">
-          <dt>掃描</dt>
-          <dd className="ledger-time">{inventory ? formatTime(inventory.scannedAtMs) : "—"}</dd>
+          <dt>{t("plate.scan")}</dt>
+          <dd className="ledger-time">
+            {inventory ? formatTime(inventory.scannedAtMs, lang) : "—"}
+          </dd>
         </div>
       </dl>
     </section>

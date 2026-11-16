@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { localDescription } from "../i18nDesc";
+import { useT } from "../i18nContext";
 import { kindLabel, statusLabel, type Row } from "../rows";
+import { useSettings } from "../settings";
 
 interface Props {
   row: Row;
@@ -13,9 +16,20 @@ interface CommandRowProps {
   command: string;
   state: CopyState;
   onCopy: (text: string) => void;
+  copyLabel: string;
+  copiedLabel: string;
+  manualLabel: string;
 }
 
-function CommandRow({ label, command, state, onCopy }: CommandRowProps) {
+function CommandRow({
+  label,
+  command,
+  state,
+  onCopy,
+  copyLabel,
+  copiedLabel,
+  manualLabel,
+}: CommandRowProps) {
   return (
     <div className="field">
       <dt>{label}</dt>
@@ -23,7 +37,7 @@ function CommandRow({ label, command, state, onCopy }: CommandRowProps) {
         <div className="cmd">
           <code>{command}</code>
           <button type="button" className="btn btn--tiny" onClick={() => onCopy(command)}>
-            {state === "ok" ? "已複製" : state === "manual" ? "請手動複製" : "複製"}
+            {state === "ok" ? copiedLabel : state === "manual" ? manualLabel : copyLabel}
           </button>
         </div>
       </dd>
@@ -32,6 +46,8 @@ function CommandRow({ label, command, state, onCopy }: CommandRowProps) {
 }
 
 export default function Inspector({ row, onClose }: Props) {
+  const t = useT();
+  const { lang } = useSettings();
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [failedText, setFailedText] = useState<string | null>(null);
 
@@ -57,65 +73,76 @@ export default function Inspector({ row, onClose }: Props) {
     return "idle";
   };
 
+  // 我們自己撰稿的說明有翻譯；上游 metadata（多為英文）保持原文
+  const description =
+    localDescription(lang, row.ecosystem, row.name, row.kind) ?? row.description;
+  const note = row.noteKey
+    ? t(row.noteKey, Object.fromEntries(row.noteArgs.map((value, index) => [String(index), value])))
+    : row.note;
+
   return (
-    <aside className="inspector" aria-label="項目細節">
+    <aside className="inspector" aria-label={row.name}>
       <div className="inspector-head">
         <div className="inspector-bar">
-          <span className="inspector-kind">{kindLabel(row.kind)}</span>
+          <span className="inspector-kind">{kindLabel(row.kind, t)}</span>
           <button type="button" className="inspector-close" onClick={onClose}>
-            關閉
+            {t("insp.close")}
           </button>
         </div>
         <h2 className="inspector-name">{row.name}</h2>
         <p className="inspector-version">{row.version}</p>
         <p className={`inspector-status is-${row.statusResolved}`}>
-          {statusLabel(row.statusResolved, row.latestResolved, row.checkable)}
+          {statusLabel(row.statusResolved, row.latestResolved, row.checkable, t)}
         </p>
-        {row.description && <p className="inspector-desc">{row.description}</p>}
+        {description && <p className="inspector-desc">{description}</p>}
       </div>
 
       <dl className="fields">
         <div className="field">
-          <dt>來源</dt>
+          <dt>{t("insp.source")}</dt>
           <dd>{row.source}</dd>
         </div>
 
         {row.location && (
           <div className="field">
-            <dt>位置</dt>
+            <dt>{t("insp.location")}</dt>
             <dd className="mono">{row.location}</dd>
           </div>
         )}
 
         {row.updateCommand && (
           <CommandRow
-            label="更新指令"
+            label={t("insp.update")}
             command={row.updateCommand}
             state={stateOf(row.updateCommand)}
             onCopy={(text) => void copy(text)}
+            copyLabel={t("insp.copy")}
+            copiedLabel={t("insp.copied")}
+            manualLabel={t("insp.manual")}
           />
         )}
 
         {row.removeCommand && (
           <CommandRow
-            label="移除指令"
+            label={t("insp.remove")}
             command={row.removeCommand}
             state={stateOf(row.removeCommand)}
             onCopy={(text) => void copy(text)}
+            copyLabel={t("insp.copy")}
+            copiedLabel={t("insp.copied")}
+            manualLabel={t("insp.manual")}
           />
         )}
 
-        {row.note && (
+        {note && (
           <div className="field">
-            <dt>備註</dt>
-            <dd>{row.note}</dd>
+            <dt>{t("insp.note")}</dt>
+            <dd>{note}</dd>
           </div>
         )}
       </dl>
 
-      <p className="foot-note">
-        只讀工具：上面的指令不會被自動執行。移除指令貼進終端機後會真的刪掉這個套件，動手前先確認。
-      </p>
+      <p className="foot-note">{t("insp.footnote")}</p>
     </aside>
   );
 }

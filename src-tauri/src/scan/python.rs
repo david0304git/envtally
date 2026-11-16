@@ -188,7 +188,11 @@ pub fn scan() -> Result<Part, String> {
                 .kind("runtime")
                 .at(interp.path.display().to_string())
                 .about("Python 直譯器本體；下面列出它這個環境裝了哪些套件")
-                .note(format!("prefix：{}", interp.prefix)),
+                .note_i18n(
+                    &format!("prefix：{}", interp.prefix),
+                    "note.python.prefix",
+                    &[&interp.prefix],
+                ),
         );
 
         let exe = interp.path.display().to_string();

@@ -1,6 +1,6 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 // 掃描階段一律是 Unknown；Current / Outdated 由前端的版本檢查結果推導，
 // 保留在 Rust 端是為了之後能改成「掃描時就自帶狀態」。
@@ -16,7 +16,7 @@ pub enum Status {
     Error,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Item {
     /// 全域唯一：ecosystem|source|name|version
@@ -36,6 +36,9 @@ pub struct Item {
     pub note: Option<String>,
     /// 這個套件／工具在做什麼（來自上游 metadata，不是我手寫的）
     pub description: Option<String>,
+    /// 備註的 i18n key（有的話前端優先用它翻譯，note 只是 zh-TW 原文）
+    pub note_key: Option<String>,
+    pub note_args: Vec<String>,
     pub status: Status,
     pub latest: Option<String>,
 }
@@ -56,6 +59,8 @@ impl Item {
             remove_command: None,
             note: None,
             description: None,
+            note_key: None,
+            note_args: Vec::new(),
             status: Status::Unknown,
             latest: None,
         }
@@ -76,13 +81,16 @@ impl Item {
         self
     }
 
-    pub fn note(mut self, note: impl Into<String>) -> Self {
-        self.note = Some(note.into());
+    pub fn rm(mut self, command: impl Into<String>) -> Self {
+        self.remove_command = Some(command.into());
         self
     }
 
-    pub fn rm(mut self, command: impl Into<String>) -> Self {
-        self.remove_command = Some(command.into());
+    /// 同時給 zh-TW 原文與 i18n key；前端在非中文語系時用 key 翻譯。
+    pub fn note_i18n(mut self, zh_tw: &str, key: &str, args: &[&str]) -> Self {
+        self.note = Some(zh_tw.to_string());
+        self.note_key = Some(key.to_string());
+        self.note_args = args.iter().map(|arg| arg.to_string()).collect();
         self
     }
 
@@ -96,7 +104,7 @@ impl Item {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Ecosystem {
     pub id: String,
@@ -112,7 +120,7 @@ pub struct Ecosystem {
     pub duration_ms: u64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Inventory {
     pub scanned_at_ms: u64,

@@ -23,7 +23,63 @@
   --red: #9e2b1f;
   --mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --sans: "Avenir Next", "PingFang TC", "Helvetica Neue", system-ui, sans-serif;
+  --bar-track: #dee2d6;
+  --bar-fill: #aab1a3;
+  --dot-idle: #c9cdc3;
+  --dot-current: #7d9a85;
+  --amber-line: #e8d9c2;
+  --amber-ink: #7a5726;
+  --warn-text: #8b918b;
+  --shadow: rgba(20, 24, 26, 0.08);
   --traffic: 90px;
+  --btn-hover: #262b2c;
+  --btn-ink: #f3f5f0;
+  --chip: #f0f2ea;
+  --disabled-bg: #b9beb5;
+  --focus: #a9b0a4;
+  --head-bg: #f4f6f0;
+  --hover-row: #f7f9f2;
+  --subtle: #fbfcf8;
+  --subtle-2: #fcfdfa;
+}
+
+/* 深色：同一個「墨黑／紙白」系統反轉，顏色仍然只給狀態 */
+:root[data-theme="dark"] {
+  --paper: #14171a;
+  --sheet: #1a1e21;
+  --ink: #e9ece7;
+  --ink-soft: #c3c9c3;
+  --muted: #8d958f;
+  --faint: #6b736d;
+  --rule: #2b3134;
+  --hair: #22272a;
+  --rail: #171b1e;
+  --rail-hover: #1f2427;
+  --rail-active: #23292c;
+  --plate: #1d2225;
+  --plate-rule: #2c3236;
+  --sel: #232a2b;
+  --subtle: #1c2124;
+  --subtle-2: #20262a;
+  --hover-row: #212729;
+  --head-bg: #1e2427;
+  --chip: #232a2d;
+  --bar-track: #262c2f;
+  --bar-fill: #4b5553;
+  --dot-idle: #4c5450;
+  --dot-current: #6f9a7d;
+  --amber: #e0a15c;
+  --amber-bg: #2e2318;
+  --amber-line: #4a3a26;
+  --amber-ink: #d8b183;
+  --green: #8cb99a;
+  --red: #e0796c;
+  --btn-ink: #14171a;
+  --btn-hover: #f0f3ee;
+  --disabled-bg: #34393a;
+  --focus: #4a5852;
+  --warn-text: #a8b0a8;
+  --shadow: rgba(0, 0, 0, 0.5);
 }
 
 * {
@@ -34,6 +90,15 @@ html,
 body,
 #root {
   height: 100%;
+}
+
+html {
+  background: var(--paper);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 body {
@@ -122,34 +187,34 @@ button {
 }
 
 .btn:hover:not(:disabled) {
-  background: #fcfdfa;
-  border-color: #c6cbc0;
+  background: var(--subtle-2);
+  border-color: var(--dot-idle);
   color: var(--ink);
 }
 
 .btn:disabled {
   color: var(--faint);
   border-color: var(--hair);
-  background: #fbfcfa;
+  background: var(--subtle-2);
 }
 
 .btn--primary {
   background: var(--ink);
   border-color: var(--ink);
-  color: #f3f5f0;
+  color: var(--btn-ink);
   font-weight: 600;
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: #262b2c;
-  border-color: #262b2c;
+  background: var(--btn-hover);
+  border-color: var(--btn-hover);
   color: #ffffff;
 }
 
 .btn--primary:disabled {
-  background: #b9beb5;
-  border-color: #b9beb5;
-  color: #f3f5f0;
+  background: var(--disabled-bg);
+  border-color: var(--disabled-bg);
+  color: var(--btn-ink);
 }
 
 .btn--ghost {
@@ -345,11 +410,11 @@ button {
   padding: 0 6px;
   border: 1px solid var(--rule);
   border-radius: 5px;
-  background: #fbfcf8;
+  background: var(--subtle);
 }
 
 .rail-search:focus-within {
-  border-color: #a9b0a4;
+  border-color: var(--focus);
   background: var(--sheet);
 }
 
@@ -389,7 +454,7 @@ button {
   border: 1px solid var(--rule);
   border-radius: 5px;
   overflow: hidden;
-  background: #fbfcf8;
+  background: var(--subtle);
 }
 
 .rail-sort button {
@@ -486,13 +551,13 @@ button {
   grid-area: bar;
   display: block;
   height: 3px;
-  background: #dee2d6;
+  background: var(--bar-track);
 }
 
 .rail-bar > i {
   display: block;
   height: 3px;
-  background: #aab1a3;
+  background: var(--bar-fill);
   transition: width 220ms ease;
 }
 
@@ -544,12 +609,12 @@ button {
   padding: 0 8px;
   border: 1px solid var(--rule);
   border-radius: 5px;
-  background: #fcfdfa;
+  background: var(--subtle-2);
   color: var(--muted);
 }
 
 .search:focus-within {
-  border-color: #a9b0a4;
+  border-color: var(--focus);
   background: var(--sheet);
 }
 
@@ -595,7 +660,7 @@ button {
   border: 1px solid var(--rule);
   border-radius: 5px;
   overflow: hidden;
-  background: #fcfdfa;
+  background: var(--subtle-2);
 }
 
 .seg button {
@@ -639,7 +704,7 @@ button {
 .warnings {
   padding: 7px 14px;
   background: var(--amber-bg);
-  border-bottom: 1px solid #e8d9c2;
+  border-bottom: 1px solid var(--amber-line);
 }
 
 .warnings-toggle {
@@ -652,7 +717,7 @@ button {
   padding-left: 16px;
   font-size: 11px;
   line-height: 1.6;
-  color: #7a5726;
+  color: var(--amber-ink);
 }
 
 /* ── 表格本體 ───────────────────────────────────────────── */
@@ -679,7 +744,7 @@ button {
   top: 0;
   z-index: 2;
   height: 26px;
-  background: #f4f6f0;
+  background: var(--head-bg);
   border-bottom: 1px solid var(--rule);
   font-size: 10.5px;
   color: var(--muted);
@@ -716,7 +781,7 @@ button {
 }
 
 .inv-row:hover {
-  background: #f7f9f2;
+  background: var(--hover-row);
 }
 
 .inv-row.is-selected {
@@ -748,18 +813,18 @@ button {
 }
 
 .cell-current {
-  color: #708b78;
+  color: var(--green);
   font-family: var(--sans);
   font-size: 10.5px;
 }
 
 .cell-faint {
-  color: #cdd1c8;
+  color: var(--faint);
 }
 
 .cell-note {
   font-size: 10.5px;
-  color: #8b918b;
+  color: var(--warn-text);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -784,7 +849,7 @@ button {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #c9cdc3;
+  background: var(--dot-idle);
 }
 
 .dot--outdated {
@@ -792,7 +857,7 @@ button {
 }
 
 .dot--current {
-  background: #7d9a85;
+  background: var(--dot-current);
 }
 
 .dot--error {
@@ -808,7 +873,7 @@ button {
   width: 100%;
   height: 31px;
   padding: 0 14px;
-  background: #fbfcf8;
+  background: var(--subtle);
   border-bottom: 1px solid var(--hair);
   text-align: left;
   font: inherit;
@@ -817,7 +882,7 @@ button {
 }
 
 .group-row:hover {
-  background: #f4f6ef;
+  background: var(--rail-hover);
 }
 
 .group-caret {
@@ -900,7 +965,7 @@ button {
   flex-direction: column;
   min-height: 0;
   overflow-y: auto;
-  background: #fbfcf8;
+  background: var(--subtle);
   border-left: 1px solid var(--rule);
 }
 
@@ -1012,7 +1077,7 @@ button {
   padding: 5px 7px;
   border: 1px solid var(--hair);
   border-radius: 4px;
-  background: #f0f2ea;
+  background: var(--chip);
   font-family: var(--mono);
   font-size: 10.5px;
   line-height: 1.5;
@@ -1080,7 +1145,7 @@ button {
     bottom: 26px;
     width: 320px;
     z-index: 5;
-    box-shadow: -10px 0 26px rgba(20, 24, 26, 0.08);
+    box-shadow: -10px 0 26px var(--shadow);
   }
 }
 
@@ -1110,4 +1175,110 @@ button {
     width: 100%;
     opacity: 0.4;
   }
+}
+
+/* ── 設定彈出面板 ─────────────────────────────────────────── */
+
+.settings-wrap {
+  position: relative;
+}
+
+.btn--icon {
+  padding: 0 7px;
+}
+
+.settings {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  z-index: 40;
+  width: 268px;
+  padding: 12px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--sheet);
+  box-shadow: 0 10px 30px var(--shadow);
+  display: grid;
+  gap: 10px;
+}
+
+.settings-title {
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.settings-row {
+  display: grid;
+  gap: 5px;
+}
+
+.settings-label {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.seg--sm {
+  height: 24px;
+}
+
+.seg--sm button {
+  font-size: 10.5px;
+  padding: 0 6px;
+  flex: 1;
+}
+
+/* ── 匯出結果提示 ─────────────────────────────────────────── */
+
+.toast {
+  position: fixed;
+  right: 16px;
+  bottom: 38px;
+  z-index: 50;
+  max-width: 520px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--sheet);
+  box-shadow: 0 12px 32px var(--shadow);
+  font-size: 11.5px;
+}
+
+.toast.is-error {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.toast-text {
+  flex: 1;
+  min-width: 0;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.toast-files {
+  font-size: 10px;
+  color: var(--muted);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toast-close {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.toast-close:hover {
+  background: var(--hair);
+  color: var(--ink);
 }

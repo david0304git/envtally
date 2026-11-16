@@ -96,7 +96,8 @@ fn collect_from_json(prefix: &str, part: &mut Part) -> Result<(), String> {
                 .filter(|candidate| *candidate != version.as_str())
                 .collect();
             if !others.is_empty() {
-                item = item.note(format!("另有 {} 並存", others.join("、")));
+                let joined = others.join("、");
+                item = item.note_i18n(&format!("另有 {joined} 並存"), "note.brew.multi", &[&joined]);
             }
         }
         part.items.push(item);
@@ -145,7 +146,12 @@ fn collect_from_legacy(prefix: &str, part: &mut Part) {
                         .filter(|candidate| *candidate != version.as_str())
                         .collect();
                     if !others.is_empty() {
-                        item = item.note(format!("另有 {} 並存", others.join("、")));
+                        let joined = others.join("、");
+                        item = item.note_i18n(
+                            &format!("另有 {joined} 並存"),
+                            "note.brew.multi",
+                            &[&joined],
+                        );
                     }
                 }
                 part.items.push(item);
@@ -221,7 +227,11 @@ fn reconcile_missing(prefix: &str, part: &mut Part) {
                 .at(format!("{prefix}/opt/{name}"))
                 .cmd(format!("brew upgrade {name}"))
                 .rm(format!("brew uninstall {name}"))
-                .note("brew info 沒有回報此 formula（可能已停用或改名）"),
+                .note_i18n(
+                    "brew info 沒有回報此 formula（可能已停用或改名）",
+                    "note.brew.unreported",
+                    &[],
+                ),
         );
     }
 }
