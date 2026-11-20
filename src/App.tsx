@@ -93,10 +93,11 @@ function Workspace() {
   const [sort, setSort] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [showWarnings, setShowWarnings] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [warnOpen, setWarnOpen] = useState(false);
+  const warnRef = useRef<HTMLDivElement | null>(null);
   const [exporting, setExporting] = useState(false);
   const [toast, setToast] = useState<
     { kind: "ok"; result: ExportResult } | { kind: "error"; message: string } | null
@@ -156,6 +157,15 @@ function Workspace() {
     const timer = window.setTimeout(() => setToast(null), 15000);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    if (!warnOpen) return;
+    const closeWarn = (event: MouseEvent) => {
+      if (!warnRef.current?.contains(event.target as Node)) setWarnOpen(false);
+    };
+    document.addEventListener("mousedown", closeWarn);
+    return () => document.removeEventListener("mousedown", closeWarn);
+  }, [warnOpen]);
 
   useEffect(() => {
     if (!settingsOpen) return;
@@ -231,6 +241,10 @@ function Workspace() {
         return;
       }
       if (event.key === "Escape") {
+        if (warnOpen) {
+          setWarnOpen(false);
+          return;
+        }
         if (settingsOpen) {
           setSettingsOpen(false);
           return;
@@ -245,7 +259,7 @@ function Workspace() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [scan, runCheck, runExport, cycleScope, settingsOpen]);
+  }, [scan, runCheck, runExport, cycleScope, settingsOpen, warnOpen]);
 
   const checkableEcosystems = useMemo(
     () => new Set(ecosystems.filter((eco) => eco.checkable).map((eco) => eco.id)),
@@ -409,6 +423,50 @@ function Workspace() {
           >
             {checking ? t("chrome.checking") : t("chrome.check")}
           </button>
+          <div className="settings-wrap" ref={warnRef}>
+            <button
+              type="button"
+              className={`btn btn--icon bell${warnings.length > 0 ? " has-warnings" : ""}`}
+              data-action="warnings"
+              onClick={() => setWarnOpen((open) => !open)}
+              aria-label={t("warn.aria", { n: warnings.length })}
+              aria-expanded={warnOpen}
+              title={t("warn.aria", { n: warnings.length })}
+            >
+              <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true" fill="none">
+                <path
+                  d="M3.3 9.7V7.1a3.7 3.7 0 0 1 7.4 0v2.6l.9 1.1H2.4z"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M5.9 12.1a1.2 1.2 0 0 0 2.2 0"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              {warnings.length > 0 && <span className="bell-badge">{warnings.length}</span>}
+            </button>
+            {warnOpen && (
+              <div className="settings warn-pop" role="dialog" aria-label={t("warn.title")}>
+                <p className="settings-title">
+                  {t("warn.title")}
+                  {warnings.length > 0 && <span className="warn-count">{warnings.length}</span>}
+                </p>
+                {warnings.length === 0 ? (
+                  <p className="warn-empty">{t("warn.empty")}</p>
+                ) : (
+                  <ul className="warn-list">
+                    {warnings.map((warning, index) => (
+                      <li key={`${index}-${warning}`}>{warning}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
           <div className="settings-wrap" ref={settingsRef}>
             <button
               type="button"
@@ -507,26 +565,6 @@ function Workspace() {
             onToggleGroups={scope === ALL_SCOPE ? toggleAllGroups : null}
             allGroupsCollapsed={allGroupsCollapsed}
           />
-
-          {warnings.length > 0 && (
-            <div className="warnings">
-              <button
-                type="button"
-                className="warnings-toggle"
-                onClick={() => setShowWarnings((value) => !value)}
-              >
-                {t("warnings.summary", { n: warnings.length })}
-                {showWarnings ? t("warnings.collapse") : t("warnings.expand")}
-              </button>
-              {showWarnings && (
-                <ul>
-                  {warnings.map((warning, index) => (
-                    <li key={`${index}-${warning}`}>{warning}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
 
           <InventoryTable
             view={view}

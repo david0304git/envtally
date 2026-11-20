@@ -79,9 +79,6 @@ const zhTW: Dict = {
   "count.items": "{n} 項",
   "count.partial": "{shown} / {total}",
   "count.unchecked": "版本未檢查 · ",
-  "warnings.summary": "{n} 則讀取警告",
-  "warnings.expand": "，展開",
-  "warnings.collapse": "，收合",
 
   "col.name": "名稱",
   "col.installed": "已安裝",
@@ -158,6 +155,9 @@ const zhTW: Dict = {
   "eco.deno.blurb": "執行環境",
   "eco.bun": "Bun",
   "eco.bun.blurb": "執行環境與全域套件",
+  "warn.title": "讀取警告",
+  "warn.empty": "目前沒有警告",
+  "warn.aria": "警告（{n} 則）",
 };
 
 const zhCN: Dict = {
@@ -231,9 +231,6 @@ const zhCN: Dict = {
   "count.items": "{n} 项",
   "count.partial": "{shown} / {total}",
   "count.unchecked": "版本未检查 · ",
-  "warnings.summary": "{n} 则读取警告",
-  "warnings.expand": "，展开",
-  "warnings.collapse": "，收起",
 
   "col.name": "名称",
   "col.installed": "已安装",
@@ -310,6 +307,9 @@ const zhCN: Dict = {
   "eco.deno.blurb": "运行环境",
   "eco.bun": "Bun",
   "eco.bun.blurb": "运行环境与全局软件包",
+  "warn.title": "读取警告",
+  "warn.empty": "当前没有警告",
+  "warn.aria": "警告（{n} 条）",
 };
 
 const en: Dict = {
@@ -383,9 +383,6 @@ const en: Dict = {
   "count.items": "{n} items",
   "count.partial": "{shown} / {total}",
   "count.unchecked": "Not checked · ",
-  "warnings.summary": "{n} warning(s)",
-  "warnings.expand": ", show",
-  "warnings.collapse": ", hide",
 
   "col.name": "Name",
   "col.installed": "Installed",
@@ -462,6 +459,9 @@ const en: Dict = {
   "eco.deno.blurb": "runtime",
   "eco.bun": "Bun",
   "eco.bun.blurb": "runtime and global packages",
+  "warn.title": "Warnings",
+  "warn.empty": "No warnings",
+  "warn.aria": "{n} warnings",
 };
 
 export const DICTS: Record<Lang, Dict> = {

@@ -140,6 +140,13 @@ async function bootstrap() {
     }, 500);
   }
 
+  // ?warnings=1 直接打開右上角的警告面板
+  if (params.get("warnings") === "1") {
+    setTimeout(() => {
+      document.querySelector<HTMLButtonElement>('[data-action="warnings"]')?.click();
+    }, 400);
+  }
+
   // ?filter=<all|outdated|current|unknown|agent> 預先切換篩選 chip
   const previewFilter = params.get("filter");
   if (previewFilter) {
