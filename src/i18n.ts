@@ -30,7 +30,7 @@ const zhTW: Dict = {
   "footer.scanAt": "掃描 {time}",
   "footer.ecosystems": "{n} 個生態系",
 
-  "plate.identifying": "正在辨識這台 Mac…",
+  "plate.identifying": "正在辨識這台機器…",
   "plate.model": "機型",
   "plate.os": "系統",
   "plate.arch": "架構",
@@ -99,7 +99,7 @@ const zhTW: Dict = {
   "status.unknown": "還沒比對上游版本（按「檢查更新」）",
   "status.notCheckable": "不檢查這個分類的版本",
 
-  "empty.scanning.title": "正在讀取這台 Mac 的環境…",
+  "empty.scanning.title": "正在讀取這台機器的環境…",
   "empty.scanning.body": "依套件數量不同，通常需要 2–10 秒。",
   "empty.none.title": "還沒有資料",
   "empty.none.body": "按右上角「重新掃描」再試一次。",
@@ -179,7 +179,7 @@ const zhCN: Dict = {
   "footer.scanAt": "扫描 {time}",
   "footer.ecosystems": "{n} 个生态系",
 
-  "plate.identifying": "正在识别这台 Mac…",
+  "plate.identifying": "正在识别这台机器…",
   "plate.model": "机型",
   "plate.os": "系统",
   "plate.arch": "架构",
@@ -248,7 +248,7 @@ const zhCN: Dict = {
   "status.unknown": "还没比对上游版本（按「检查更新」）",
   "status.notCheckable": "不检查这个分类的版本",
 
-  "empty.scanning.title": "正在读取这台 Mac 的环境…",
+  "empty.scanning.title": "正在读取这台机器的环境…",
   "empty.scanning.body": "依软件包数量不同，通常需要 2–10 秒。",
   "empty.none.title": "还没有数据",
   "empty.none.body": "按右上角「重新扫描」再试一次。",
@@ -328,7 +328,7 @@ const en: Dict = {
   "footer.scanAt": "Scanned {time}",
   "footer.ecosystems": "{n} ecosystems",
 
-  "plate.identifying": "Identifying this Mac…",
+  "plate.identifying": "Identifying this machine…",
   "plate.model": "Model",
   "plate.os": "OS",
   "plate.arch": "Arch",
@@ -397,7 +397,7 @@ const en: Dict = {
   "status.unknown": "Not compared with upstream yet (press “Check updates”)",
   "status.notCheckable": "No upstream comparison for this category",
 
-  "empty.scanning.title": "Reading this Mac's environment…",
+  "empty.scanning.title": "Reading this machine's environment…",
   "empty.scanning.body": "Usually takes 2–10 seconds depending on package count.",
   "empty.none.title": "No data yet",
   "empty.none.body": "Press “Scan” in the top right to try again.",

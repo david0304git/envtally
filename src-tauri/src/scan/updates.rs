@@ -318,6 +318,23 @@ fn is_newer(latest: &str, installed: &str) -> bool {
 
 /// Java：只比「同一個 feature 版本的最新修補版」，不會叫你跳大版。
 /// 基準是 Adoptium Temurin（Oracle JDK 與它共用上游 OpenJDK 版號）。
+/// Adoptium API 的 os / architecture 參數（依執行平台決定）
+fn adoptium_platform() -> (&'static str, &'static str) {
+    let os = if cfg!(target_os = "macos") {
+        "mac"
+    } else if cfg!(windows) {
+        "windows"
+    } else {
+        "linux"
+    };
+    let arch = if cfg!(target_arch = "aarch64") {
+        "aarch64"
+    } else {
+        "x64"
+    };
+    (os, arch)
+}
+
 fn java() -> EcoCheck {
     let mut check = EcoCheck::new("java");
     let Ok(part) = runtimes::java() else {
@@ -337,8 +354,9 @@ fn java() -> EcoCheck {
         return check;
     }
 
+    let (os, arch) = adoptium_platform();
     let url = format!(
-        "https://api.adoptium.net/v3/assets/latest/{major}/hotspot?os=mac&architecture=aarch64&image_type=jdk"
+        "https://api.adoptium.net/v3/assets/latest/{major}/hotspot?os={os}&architecture={arch}&image_type=jdk"
     );
     match upstream::get_json(&url) {
         Ok(value) => {
@@ -358,7 +376,7 @@ fn java() -> EcoCheck {
                     check.ok = true;
                 }
                 None => check.warnings.push(format!(
-                    "Adoptium 沒有 Java {major} 的 macOS/arm64 建置，無法比對"
+                    "Adoptium 沒有 Java {major} 的 {os}/{arch} 建置，無法比對"
                 )),
             }
         }
@@ -554,6 +572,27 @@ fn ruby() -> EcoCheck {
 
 #[cfg(test)]
 mod tests {
+    use super::adoptium_platform;
+
+    #[test]
+    fn adoptium_platform_follows_the_host() {
+        let (os, arch) = adoptium_platform();
+        let expected_os = if cfg!(target_os = "macos") {
+            "mac"
+        } else if cfg!(windows) {
+            "windows"
+        } else {
+            "linux"
+        };
+        let expected_arch = if cfg!(target_arch = "aarch64") {
+            "aarch64"
+        } else {
+            "x64"
+        };
+        assert_eq!(os, expected_os);
+        assert_eq!(arch, expected_arch);
+    }
+
     use super::parse_rustup_check;
 
     #[test]

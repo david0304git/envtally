@@ -28,7 +28,7 @@ const TOOLS: &[(&str, &[&str], &str)] = &[
     ("pandoc", &["--version"], "文件格式轉換（Markdown / PDF / docx…）"),
     ("clang", &["--version"], "C / C++ / Objective-C 編譯器前端"),
     ("vim", &["--version"], "終端機文字編輯器"),
-    ("zsh", &["--version"], "Z shell（macOS 預設 shell）"),
+    ("zsh", &["--version"], "Z shell（互動式命令列 shell）"),
 ];
 
 pub fn scan() -> Result<Part, String> {

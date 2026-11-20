@@ -59,9 +59,9 @@ const BY_NAME: Record<string, Triple> = {
     "PHP interpreter: web backends and CLI scripts",
   ],
   "ruby|Ruby": [
-    "Ruby 直譯器：macOS 內建版本，系統工具（如 CocoaPods）會用到",
-    "Ruby 解释器：macOS 内置版本，系统工具（如 CocoaPods）会用到",
-    "Ruby interpreter: the macOS built-in, used by tools such as CocoaPods",
+    "Ruby 直譯器：系統工具（如 CocoaPods）會用到",
+    "Ruby 解释器：系统工具（如 CocoaPods）会用到",
+    "Ruby interpreter, used by tools such as CocoaPods",
   ],
   "go|runtime": [
     "Go 編譯器與工具鏈：go build / test / run",
@@ -121,7 +121,7 @@ const BY_NAME: Record<string, Triple> = {
   "system|pandoc": ["文件格式轉換（Markdown / PDF / docx…）", "文档格式转换（Markdown / PDF / docx…）", "Document converter (Markdown / PDF / docx…)"],
   "system|clang": ["C / C++ / Objective-C 編譯器前端", "C / C++ / Objective-C 编译器前端", "C / C++ / Objective-C compiler front end"],
   "system|vim": ["終端機文字編輯器", "终端文本编辑器", "Terminal text editor"],
-  "system|zsh": ["Z shell（macOS 預設 shell）", "Z shell（macOS 默认 shell）", "Z shell (the macOS default shell)"],
+  "system|zsh": ["Z shell（互動式命令列 shell）", "Z shell（交互式命令行 shell）", "Z shell (interactive command shell)"],
 };
 
 /** 名稱會變的項目（toolchain 名稱、Python 版本…）用 ecosystem|kind 當後備。 */

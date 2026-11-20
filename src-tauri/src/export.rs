@@ -218,7 +218,7 @@ pub fn write_bundle_at(
     let mut md = format!("{}\n\n", text.title);
     md.push_str(&format!("- {}: {}\n", text.scanned, stamp()));
     md.push_str(&format!(
-        "- {} · macOS {} · {}\n\n",
+        "- {} · {} · {}\n\n",
         inventory.model, inventory.os, inventory.arch
     ));
 

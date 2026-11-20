@@ -104,6 +104,15 @@ pub fn pick_version(text: &str) -> Option<String> {
 }
 
 /// 依執行檔位置判斷來源（表格「來源」欄用）。
+/// 「系統附帶」的標籤：macOS 說 macOS 內建，其他平台說系統內建
+pub fn builtin_label() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "macOS 內建"
+    } else {
+        "系統內建"
+    }
+}
+
 pub fn origin_for(path: &str) -> &'static str {
     let lower = path.to_lowercase();
     if lower.starts_with("c:\\program files") {
@@ -123,7 +132,7 @@ pub fn origin_for(path: &str) -> &'static str {
         || path.starts_with("/bin/")
         || path.starts_with("/usr/sbin/")
     {
-        "macOS 內建"
+        builtin_label()
     } else if path.starts_with("/Library/Frameworks/") {
         "python.org 安裝"
     } else if path.contains("/.deno/") {
@@ -355,6 +364,19 @@ mod tests {
             Some("8.4.11")
         );
         assert_eq!(pick_version("no version here").as_deref(), None);
+    }
+
+    #[test]
+    fn builtin_label_matches_the_platform() {
+        let label = builtin_label();
+        if cfg!(target_os = "macos") {
+            assert_eq!(label, "macOS 內建");
+        } else {
+            assert_eq!(label, "系統內建");
+        }
+        // /usr/bin 底下的工具要用同一個標籤
+        assert_eq!(origin_for("/usr/bin/git"), label);
+        assert_eq!(origin_for("/bin/zsh"), label);
     }
 
     #[test]

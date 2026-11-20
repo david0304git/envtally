@@ -77,7 +77,7 @@ fn probe(path: &PathBuf) -> Option<Interp> {
     }
     let path_str = path.display().to_string();
     let source = if path_str.starts_with("/usr/bin/") {
-        format!("Python {version}（macOS 內建）")
+        format!("Python {version}（{}）", crate::scan::builtin_label())
     } else if path_str.starts_with("/opt/homebrew/") {
         format!("Python {version}（Homebrew）")
     } else {

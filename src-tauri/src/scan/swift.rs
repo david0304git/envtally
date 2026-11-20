@@ -52,7 +52,7 @@ pub fn scan() -> Result<Part, String> {
     let source = match dev_dir.as_deref() {
         Some(dir) if dir.contains("CommandLineTools") => "Xcode 命令列工具",
         Some(_) => "Xcode",
-        None => "macOS 內建",
+        None => crate::scan::builtin_label(),
     };
 
     let mut item = Item::new("swift", source, "Swift", &version)
