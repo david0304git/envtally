@@ -140,6 +140,21 @@ async function bootstrap() {
     }, 500);
   }
 
+  // ?q=<關鍵字> 預先填入搜尋框
+  const previewQuery = params.get("q");
+  if (previewQuery) {
+    setTimeout(() => {
+      const input = document.querySelector<HTMLInputElement>(".search input");
+      if (!input) return;
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value",
+      )?.set;
+      setter?.call(input, previewQuery);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    }, 250);
+  }
+
   // ?focus=<ecoId> 直接把左側分類切到某一個（例如 focus=cli）
   const focusEco = params.get("focus");
   if (focusEco) {

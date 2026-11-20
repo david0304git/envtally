@@ -19,6 +19,7 @@ import {
   type SortKey,
   type StatusFilter,
 } from "./rows";
+import { matchesQuery } from "./search";
 import { SettingsContext, useSettings, type SettingsValue } from "./settings";
 import type { ExportResult, Inventory, Updates } from "./types";
 import {
@@ -277,16 +278,21 @@ function Workspace() {
   );
 
   const visibleRows = useMemo(() => {
-    const needle = query.trim().toLowerCase();
+    const needle = query.trim();
     let rows = allRows;
     if (scope !== ALL_SCOPE) {
       rows = rows.filter((row) => row.ecosystem === scope);
     }
     if (needle) {
       rows = rows.filter((row) =>
-        [row.name, row.version, row.source, t(kindKey(row.kind))].some((field) =>
-          field.toLowerCase().includes(needle),
-        ),
+        matchesQuery(needle, [
+          row.name,
+          row.version,
+          row.source,
+          row.location,
+          row.description,
+          t(kindKey(row.kind)),
+        ]),
       );
     }
     if (filter !== "all") {
