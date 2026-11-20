@@ -20,9 +20,10 @@
 | Swift | Swift 工具鏈 + macOS SDK | `swift --version`、`xcrun --show-sdk-version`（注意跳過 swift-driver 的版本號） |
 | Deno | 執行環境（含內建 V8 / TypeScript 版本） | `deno --version` |
 | Bun | 執行環境 + 全域套件 | `bun --version`、讀 `~/.bun/install/global/node_modules/*/package.json` |
+| 全域指令 | PATH 上、但不屬於其他分類的指令（自製腳本、VirtualBox 工具、R、uv…） | 掃描 `~/.local/bin`、`~/.cargo/bin`、`/usr/local/bin`、Homebrew bin 等目錄，逐一跑 `--version` |
 | 系統工具 | git、curl、jq、ffmpeg、sqlite3 等 24 種命令列工具 | 各自跑 `--version`，取第一個版本號 |
 
-十三個分類並行掃描（沒安裝的自動隱藏），實測 **619 項 / 約 1 秒**。
+十四個分類並行掃描（沒安裝的自動隱藏），實測 **619 項 / 約 1 秒**。
 
 ### 左側分類選單
 
@@ -78,7 +79,7 @@
 未安裝：Go · Deno · Bun        10 個生態系
 ```
 
-所以在只有 Python 的機器上，畫面就是乾淨的兩個分類（Python + 系統工具），不會出現一堆「找不到 X」。分類清單目前有 13 個（Homebrew / Python / Node.js / Rust / Java / .NET / PHP / Ruby / Go / Swift / Deno / Bun / 系統工具）。
+所以在只有 Python 的機器上，畫面就是乾淨的兩個分類（Python + 系統工具），不會出現一堆「找不到 X」。分類清單目前有 14 個（Homebrew / Python / Node.js / Rust / Java / .NET / PHP / Ruby / Go / Swift / Deno / Bun / 全域指令 / 系統工具）。
 
 ### 版本狀態
 

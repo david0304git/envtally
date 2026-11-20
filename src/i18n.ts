@@ -62,7 +62,9 @@ const zhTW: Dict = {
   "eco.php.blurb": "直譯器",
   "eco.ruby": "Ruby",
   "eco.ruby.blurb": "直譯器與 gem",
-  "eco.system": "系統工具",
+    "eco.cli": "全域指令",
+  "eco.cli.blurb": "PATH 上、不屬於其他分類的指令",
+"eco.system": "系統工具",
   "eco.system.blurb": "命令列工具版本",
 
   "search.placeholder": "搜尋名稱、版本、來源",
@@ -211,7 +213,9 @@ const zhCN: Dict = {
   "eco.php.blurb": "解释器",
   "eco.ruby": "Ruby",
   "eco.ruby.blurb": "解释器与 gem",
-  "eco.system": "系统工具",
+    "eco.cli": "全局指令",
+  "eco.cli.blurb": "PATH 上、不属于其他分类的指令",
+"eco.system": "系统工具",
   "eco.system.blurb": "命令行工具版本",
 
   "search.placeholder": "搜索名称、版本、来源",
@@ -360,7 +364,9 @@ const en: Dict = {
   "eco.php.blurb": "interpreter",
   "eco.ruby": "Ruby",
   "eco.ruby.blurb": "interpreter and gems",
-  "eco.system": "System tools",
+    "eco.cli": "CLI tools",
+  "eco.cli.blurb": "commands on PATH not covered elsewhere",
+"eco.system": "System tools",
   "eco.system.blurb": "command-line tool versions",
 
   "search.placeholder": "Search name, version, source",

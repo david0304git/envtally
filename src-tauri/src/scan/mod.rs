@@ -1,5 +1,6 @@
 pub mod brew;
 pub mod bun;
+pub mod cli;
 pub mod deno;
 pub mod go;
 pub mod node;
@@ -133,8 +134,10 @@ pub fn origin_for(path: &str) -> &'static str {
         || path.starts_with("/usr/sbin/")
     {
         builtin_label()
-    } else if path.starts_with("/Library/Frameworks/") {
+    } else if path.starts_with("/Library/Frameworks/Python.framework/") {
         "python.org 安裝"
+    } else if path.starts_with("/Library/Frameworks/") {
+        "框架安裝"
     } else if path.contains("/.deno/") {
         "Deno 安裝器"
     } else if path.contains("/.bun/") {
@@ -144,7 +147,7 @@ pub fn origin_for(path: &str) -> &'static str {
     } else if path.contains("/.nvm/") {
         "nvm"
     } else if path.starts_with("/usr/local/") {
-        "Homebrew（Intel 路徑）"
+        "其他來源"
     } else {
         "其他來源"
     }
@@ -165,6 +168,7 @@ fn specs() -> Vec<(&'static str, &'static str, &'static str, ScanFn, bool)> {
         ("swift", "Swift", "Swift 工具鏈與 SDK", swift::scan, false),
         ("deno", "Deno", "執行環境", deno::scan, false),
         ("bun", "Bun", "執行環境與全域套件", bun::scan, false),
+        ("cli", "全域指令", "PATH 上、不屬於其他分類的指令", cli::scan, false),
         ("system", "系統工具", "命令列工具版本", system::scan, false),
     ]
 }

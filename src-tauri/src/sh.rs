@@ -45,7 +45,7 @@ pub fn path_separator() -> char {
 }
 
 /// nvm 安裝了多個 node 版本時，取號碼最大的那個 bin 目錄。
-fn newest_nvm_bin() -> Option<String> {
+pub fn newest_nvm_bin() -> Option<String> {
     let base = format!("{}/.nvm/versions/node", home());
     let mut best: Option<(Vec<u32>, String)> = None;
     for entry in std::fs::read_dir(&base).ok()?.flatten() {

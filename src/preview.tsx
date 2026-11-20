@@ -140,6 +140,16 @@ async function bootstrap() {
     }, 500);
   }
 
+  // ?focus=<ecoId> 直接把左側分類切到某一個（例如 focus=cli）
+  const focusEco = params.get("focus");
+  if (focusEco) {
+    setTimeout(() => {
+      document
+        .querySelector<HTMLButtonElement>(`.rail-item[data-eco="${focusEco}"]`)
+        ?.click();
+    }, 300);
+  }
+
   // ?selected=1 自動選第一列；?select=<名稱> 選指定那一列，方便看細節抽屜
   const wantedSelect = params.get("select");
   if (params.get("selected") === "1" || wantedSelect) {

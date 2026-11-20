@@ -130,6 +130,7 @@ export default function EcosystemRail({ ecosystems, counts, scope, total, onSele
             key={eco.id}
             type="button"
             className={`rail-item ${scope === eco.id ? "is-active" : ""}`}
+            data-eco={eco.id}
             onClick={() => onSelect(eco.id)}
             title={eco.error ?? ecoBlurb(eco.id, eco.blurb, t)}
           >

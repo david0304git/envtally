@@ -21,6 +21,27 @@ const LOCAL: Record<string, { viewBox: string; size: number; node: ReactElement 
       </g>
     ),
   },
+  cli: {
+    viewBox: "0 0 14 14",
+    size: 11,
+    node: (
+      <g>
+        <g fill="currentColor">
+          <rect x="1.7" y="3" width="6.2" height="1.7" rx="0.85" />
+          <rect x="1.7" y="6.15" width="4.8" height="1.7" rx="0.85" />
+          <rect x="1.7" y="9.3" width="6.2" height="1.7" rx="0.85" />
+        </g>
+        <path
+          d="M9.7 5.4 11.6 7 9.7 8.6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+    ),
+  },
   system: {
     viewBox: "0 0 14 14",
     size: 11,

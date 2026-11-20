@@ -63,6 +63,11 @@ const BY_NAME: Record<string, Triple> = {
     "Ruby 解释器：系统工具（如 CocoaPods）会用到",
     "Ruby interpreter, used by tools such as CocoaPods",
   ],
+  "cli|cli": [
+    "PATH 上的可執行指令（不屬於其他分類管理）",
+    "PATH 上的可执行指令（不属于其他分类管理）",
+    "An executable on PATH that no other category manages",
+  ],
   "go|runtime": [
     "Go 編譯器與工具鏈：go build / test / run",
     "Go 编译器与工具链：go build / test / run",
