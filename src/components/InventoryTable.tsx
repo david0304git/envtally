@@ -175,6 +175,11 @@ export default function InventoryTable({
               title={row.description ? `${row.name}\n${row.description}` : row.name}
             >
               {row.name}
+              {row.agent && (
+                <span className="agent-tag" title={t("filter.agent")}>
+                  AI
+                </span>
+              )}
             </span>
             <span className="cell-version">{row.version}</span>
             <span className="cell-latest">

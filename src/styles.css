@@ -789,6 +789,18 @@ button {
   box-shadow: inset 2px 0 0 var(--ink);
 }
 
+.agent-tag {
+  margin-left: 6px;
+  padding: 0 4px;
+  border: 1px solid var(--amber);
+  border-radius: 3px;
+  color: var(--amber);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  vertical-align: 1px;
+}
+
 .cell-name {
   overflow: hidden;
   white-space: nowrap;

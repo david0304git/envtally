@@ -295,7 +295,9 @@ function Workspace() {
         ]),
       );
     }
-    if (filter !== "all") {
+    if (filter === "agent") {
+      rows = rows.filter((row) => row.agent);
+    } else if (filter !== "all") {
       rows = rows.filter((row) => row.statusResolved === filter);
     }
     return rows;

@@ -35,6 +35,7 @@ export default function Toolbar({
     { id: "outdated", label: t("filter.outdated") },
     { id: "current", label: t("filter.current") },
     { id: "unknown", label: t("filter.unknown") },
+    { id: "agent", label: t("filter.agent") },
   ];
 
   return (
@@ -69,6 +70,7 @@ export default function Toolbar({
           <button
             key={entry.id}
             type="button"
+            data-filter={entry.id}
             className={filter === entry.id ? "is-active" : ""}
             onClick={() => onFilter(entry.id)}
           >

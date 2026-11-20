@@ -39,6 +39,8 @@ pub struct Item {
     /// 備註的 i18n key（有的話前端優先用它翻譯，note 只是 zh-TW 原文）
     pub note_key: Option<String>,
     pub note_args: Vec<String>,
+    /// 是否為 AI／Agent CLI（由 scan::agents 依名稱辨識，跨分類標記）
+    pub agent: bool,
     pub status: Status,
     pub latest: Option<String>,
 }
@@ -61,6 +63,7 @@ impl Item {
             description: None,
             note_key: None,
             note_args: Vec::new(),
+            agent: false,
             status: Status::Unknown,
             latest: None,
         }

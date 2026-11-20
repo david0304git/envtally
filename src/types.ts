@@ -15,6 +15,7 @@ export interface Item {
   noteKey: string | null;
   noteArgs: string[];
   description: string | null;
+  agent: boolean;
   status: Status;
   latest: string | null;
 }

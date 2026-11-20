@@ -1,3 +1,4 @@
+pub mod agents;
 pub mod brew;
 pub mod bun;
 pub mod cli;
@@ -276,6 +277,26 @@ fn machine() -> (String, String, String, String) {
 }
 
 /// 並行掃描所有生態系。
+/// 標記 AI／Agent CLI，並補上對應的更新指令（只顯示、不執行）
+fn mark_agent_cli(item: &mut crate::models::Item) {
+    if !agents::is_agent_cli(&item.name) {
+        return;
+    }
+    item.agent = true;
+    if item.update_command.is_some() {
+        return;
+    }
+    // uv 安裝的指令工具
+    let from_uv = item
+        .location
+        .as_deref()
+        .map(|path| path.contains(".local/bin"))
+        .unwrap_or(false);
+    if from_uv {
+        item.update_command = Some(format!("uv tool upgrade {}", item.name));
+    }
+}
+
 pub fn collect() -> Inventory {
     let started = Instant::now();
     let specs = specs();
@@ -323,7 +344,11 @@ pub fn collect() -> Inventory {
         };
         match outcome {
             Ok(part) => {
-                eco.items = part.items;
+                let mut items = part.items;
+                for item in &mut items {
+                    mark_agent_cli(item);
+                }
+                eco.items = items;
                 eco.warnings = part.warnings;
                 eco.headline = part.headline;
                 eco.available = !part.missing;

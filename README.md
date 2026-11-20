@@ -71,6 +71,21 @@
 - 再點同一欄 → 切換成**遞減**（箭頭從 `↑` 變 `↓`，各欄位都有指示）
 - 「全部」檢視時，排序在每個分類內部各自套用
 
+### 找出已安裝的 Agent CLI
+
+工具列有一個 **Agent CLI** 篩選 chip：一點就跨分類列出所有 AI／代理類命令列工具，
+不管它是用 npm、uv、Homebrew 還是直接下載安裝的。
+
+```
+[全部] [需更新] [已最新] [未檢查] [Agent CLI] ← 2 / 637
+  Node.js   tripo-cli [AI] 0.11.2   npm 全域
+  全域指令  dreamina-canvas [AI] 1.3.0   uv tool upgrade dreamina-canvas
+```
+
+- 清單在 `src-tauri/src/scan/agents.rs`（名稱 + 關鍵字兜底），新增工具時改一個常數
+- SDK／函式庫（openai、anthropic、langchain…）不算 CLI，直接排除
+- 被標記的項目若沒有更新指令，會自動補上對應的（`uv tool upgrade`、`npm install -g …@latest`）
+
 ### 沒安裝的分類會自動隱藏
 
 掃描器先確認工具在不在：不在就回傳「這台沒有」，前端**整個分類不顯示**，也不會變成警告。底部狀態列會註明：

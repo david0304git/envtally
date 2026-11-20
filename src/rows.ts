@@ -14,7 +14,7 @@ export interface Row extends Item {
 
 export type SortKey = "name" | "version" | "latest" | "source" | "kind";
 export type SortDir = "asc" | "desc";
-export type StatusFilter = "all" | "outdated" | "current" | "unknown";
+export type StatusFilter = "all" | "outdated" | "current" | "unknown" | "agent";
 
 export type ViewRow =
   | {

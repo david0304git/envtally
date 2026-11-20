@@ -140,6 +140,16 @@ async function bootstrap() {
     }, 500);
   }
 
+  // ?filter=<all|outdated|current|unknown|agent> 預先切換篩選 chip
+  const previewFilter = params.get("filter");
+  if (previewFilter) {
+    setTimeout(() => {
+      document
+        .querySelector<HTMLButtonElement>(`.seg button[data-filter="${previewFilter}"]`)
+        ?.click();
+    }, 250);
+  }
+
   // ?q=<關鍵字> 預先填入搜尋框
   const previewQuery = params.get("q");
   if (previewQuery) {
