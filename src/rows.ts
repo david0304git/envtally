@@ -79,7 +79,7 @@ export function statusLabel(
     case "error":
       return t("status.error");
     default:
-      return checkable ? t("status.unknown") : t("status.notCheckable");
+      return checkable ? "" : t("status.notCheckable");
   }
 }
 

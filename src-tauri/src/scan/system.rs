@@ -34,14 +34,22 @@ const TOOLS: &[(&str, &[&str], &str)] = &[
 pub fn scan() -> Result<Part, String> {
     let mut part = Part::new();
 
+    // 只認系統目錄裡的版本：`which` 會優先找到 Homebrew 的，但那些屬於 Homebrew 分類
+    const SYSTEM_DIRS: &[&str] = &["/usr/bin", "/bin", "/usr/sbin", "/sbin"];
+
     for &(program, args, about) in TOOLS {
-        let Some(path) = sh::which(program) else {
+        let Some(path) = SYSTEM_DIRS
+            .iter()
+            .map(|dir| std::path::Path::new(dir).join(program))
+            .find(|candidate| candidate.is_file())
+        else {
             continue;
         };
         let path_str = path.display().to_string();
         let origin = origin_for(&path_str);
 
-        let mut item = match sh::run(program, args, Duration::from_secs(15)) {
+        let program_path = path.display().to_string();
+        let mut item = match sh::run(&program_path, args, Duration::from_secs(15)) {
             Ok(out) => {
                 let text = format!("{}\n{}", out.stdout, out.stderr);
                 let version = pick_version(&text).unwrap_or_else(|| String::from("未知"));
@@ -59,10 +67,7 @@ pub fn scan() -> Result<Part, String> {
             }
         };
 
-        // 只有 Homebrew 裝的可以這樣移除；macOS 內建或 Xcode 附的不提供
-        if origin == "Homebrew" {
-            item = item.rm(format!("brew uninstall {program}"));
-        }
+        // 系統目錄底下的工具由 macOS 提供，不提供移除指令
         part.items.push(item);
     }
 

@@ -81,6 +81,8 @@ function Workspace() {
   const { lang, theme, setLang, setTheme } = useSettings();
 
   const [inventory, setInventory] = useState<Inventory | null>(null);
+  // 第一次載入後預設收合；之後重新掃描保留使用者展開的狀態
+  const collapsedInitialized = useRef(false);
   const [scanning, setScanning] = useState(true);
   const [scanError, setScanError] = useState<string | null>(null);
   const [updates, setUpdates] = useState<Updates | null>(null);
@@ -112,6 +114,12 @@ function Workspace() {
     try {
       const next = await scanLocal();
       setInventory(next);
+      if (!collapsedInitialized.current) {
+        collapsedInitialized.current = true;
+        setCollapsedGroups(
+          new Set(next.ecosystems.filter((eco) => eco.available).map((eco) => eco.id)),
+        );
+      }
       // 資料換了一輪，舊的版本檢查結果就對不上 key 了
       setUpdates(null);
       setSelectedId(null);
@@ -322,6 +330,8 @@ function Workspace() {
 
   // 同一欄再按一次就反向；換欄位則從遞增開始
   const handleSort = useCallback((key: SortKey) => {
+    // 收合狀態下排序看不到效果，所以排序時一併展開全部分類
+    setCollapsedGroups(new Set());
     setSort((current) => {
       if (current === key) {
         setSortDir((dir) => (dir === "asc" ? "desc" : "asc"));
@@ -584,7 +594,6 @@ function Workspace() {
       </div>
 
       <footer className="footer">
-        <span>{t("footer.readonly")}</span>
         <span className="spacer" />
         {checking && <span className="footer-busy">{t("footer.checking")}</span>}
         {updates && !checking && (

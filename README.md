@@ -20,10 +20,11 @@
 | Swift | Swift 工具鏈 + macOS SDK | `swift --version`、`xcrun --show-sdk-version`（注意跳過 swift-driver 的版本號） |
 | Deno | 執行環境（含內建 V8 / TypeScript 版本） | `deno --version` |
 | Bun | 執行環境 + 全域套件 | `bun --version`、讀 `~/.bun/install/global/node_modules/*/package.json` |
-| 全域指令 | PATH 上、但不屬於其他分類的指令（自製腳本、VirtualBox 工具、R、uv…） | 掃描 `~/.local/bin`、`~/.cargo/bin`、`/usr/local/bin`、Homebrew bin 等目錄，逐一跑 `--version` |
-| 系統工具 | git、curl、jq、ffmpeg、sqlite3 等 24 種命令列工具 | 各自跑 `--version`，取第一個版本號 |
+| R / VirtualBox / uv | 同一個程式附帶的多個指令，各自成一個分類（版本相同時收合顯示版本） | 依名稱前綴與安裝路徑歸類（`R.framework`、`VBox*`、`uv`/`uvx`） |
+| 全域指令 | 第三方、且不屬於任何套件管理器的指令 | 掃描 `~/.local/bin`、`~/.cargo/bin`、`/usr/local/bin`、Homebrew bin，排除 Cellar／rustup／node_modules／Python.framework |
+| 系統工具 | macOS 內建的命令列工具（只看 `/usr/bin`、`/bin`、`/usr/sbin`、`/sbin`） | 各自跑 `--version`；Homebrew 裝的版本屬於 Homebrew 分類，不會重複列 |
 
-十四個分類並行掃描（沒安裝的自動隱藏），實測 **619 項 / 約 1 秒**。
+十七個分類並行掃描（沒安裝的自動隱藏），實測 **632 項 / 約 1 秒**。
 
 ### 左側分類選單
 
@@ -41,7 +42,7 @@
 | Python | `importlib.metadata` 的 `Summary`（本地讀，比 `pip list` 快） | 384/390 |
 | npm 全域 | 各套件自己的 `package.json` → `description` | 5/6 |
 | Ruby gem | `Gem::Specification#summary`（一次呼叫抓全部） | 48/48 |
-| 執行環境 / 系統工具 | 程式內建的短說明（JDK、.NET、PHP、Ruby、git、ffmpeg…） | 68/68 |
+| 執行環境 / 系統工具 / 程式分組 | 程式內建的短說明（JDK、.NET、PHP、Ruby、R、VirtualBox、uv…） | 已翻譯 |
 
 合計 **610/619（98%）**。少數套件上游本來就沒寫 Summary（例如 `orjson`、`safetensors`、`corepack`），面板就只顯示版本相關資訊，不會硬塞一段猜測的文字。
 
@@ -59,9 +60,15 @@
 | .NET | `9.0.304`（SDK） |
 | PHP | `8.4.11` |
 | Ruby | `2.6.10p210`（gem 掛在這個分類下） |
-| 系統工具 | 沒有單一版本，改顯示分類說明 |
+| 系統工具、全域指令 | 沒有單一版本，改顯示分類說明 |
 
 工具列有「收合全部分類／展開全部分類」一次切換。**有搜尋關鍵字或狀態篩選時會強制展開**，免得命中結果藏在收合的分類裡。
+
+### 預設收合與排序
+
+- 啟動後預設**收合全部分類**，先看每個分類的版本摘要（按「展開全部分類」可全開）
+- 按表頭排序時會自動展開全部分類，否則收合狀態下按了看不到效果
+- 全站滾動條加細（6 px），顏色跟隨主題
 
 ### 表格排序
 
@@ -94,7 +101,7 @@
 未安裝：Go · Deno · Bun        10 個生態系
 ```
 
-所以在只有 Python 的機器上，畫面就是乾淨的兩個分類（Python + 系統工具），不會出現一堆「找不到 X」。分類清單目前有 14 個（Homebrew / Python / Node.js / Rust / Java / .NET / PHP / Ruby / Go / Swift / Deno / Bun / 全域指令 / 系統工具）。
+所以在只有 Python 的機器上，畫面就是乾淨的兩個分類（Python + 系統工具），不會出現一堆「找不到 X」。分類清單目前有 17 個（Homebrew / Python / Node.js / Rust / Java / .NET / PHP / Ruby / Go / Swift / Deno / Bun / R / VirtualBox / uv / 全域指令 / 系統工具）。
 
 ### 版本狀態
 

@@ -251,6 +251,18 @@ pub fn scan() -> Result<Part, String> {
     }
 
     let mut part = Part::new();
+
+    // brew 自己也是指令，放在它所屬的分類（而不是「全域指令」）
+    if let Ok(out) = sh::run("brew", &["--version"], Duration::from_secs(30)) {
+        let version = pick_version(out.text()).unwrap_or_else(|| String::from("未知"));
+        let mut brew_item = Item::new("brew", "Homebrew", "brew", &version)
+            .kind("toolchain")
+            .about("Homebrew 套件管理器本體：install / upgrade / list");
+        if let Some(path) = sh::which("brew") {
+            brew_item = brew_item.at(path.display().to_string());
+        }
+        part.items.push(brew_item);
+    }
     let prefix = sh::run("brew", &["--prefix"], Duration::from_secs(20))
         .ok()
         .map(|r| r.stdout.trim().to_string())

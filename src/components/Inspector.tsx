@@ -47,6 +47,7 @@ function CommandRow({
 
 export default function Inspector({ row, onClose }: Props) {
   const t = useT();
+  const statusText = statusLabel(row.statusResolved, row.latestResolved, row.checkable, t);
   const { lang } = useSettings();
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [failedText, setFailedText] = useState<string | null>(null);
@@ -91,9 +92,9 @@ export default function Inspector({ row, onClose }: Props) {
         </div>
         <h2 className="inspector-name">{row.name}</h2>
         <p className="inspector-version">{row.version}</p>
-        <p className={`inspector-status is-${row.statusResolved}`}>
-          {statusLabel(row.statusResolved, row.latestResolved, row.checkable, t)}
-        </p>
+        {statusText && (
+          <p className={`inspector-status is-${row.statusResolved}`}>{statusText}</p>
+        )}
         {description && <p className="inspector-desc">{description}</p>}
       </div>
 
@@ -142,7 +143,6 @@ export default function Inspector({ row, onClose }: Props) {
         )}
       </dl>
 
-      <p className="foot-note">{t("insp.footnote")}</p>
     </aside>
   );
 }

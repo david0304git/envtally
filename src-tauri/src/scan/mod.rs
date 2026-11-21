@@ -4,6 +4,7 @@ pub mod bun;
 pub mod cli;
 pub mod deno;
 pub mod go;
+pub mod groups;
 pub mod node;
 pub mod python;
 pub mod runtimes;
@@ -106,6 +107,26 @@ pub fn pick_version(text: &str) -> Option<String> {
 }
 
 /// 依執行檔位置判斷來源（表格「來源」欄用）。
+/// 分組收合時顯示的摘要：有共同版本就顯示版本，沒有才退回指令數。
+fn group_headline(items: &[crate::models::Item]) -> String {
+    let mut versions: Vec<&str> = Vec::new();
+    for item in items {
+        let version = item.version.trim();
+        if version.is_empty() || version == "—" || version == "未知" {
+            continue;
+        }
+        if !versions.iter().any(|known| *known == version) {
+            versions.push(version);
+        }
+    }
+    match versions.len() {
+        0 => format!("{} 個指令", items.len()),
+        1 => versions[0].to_string(),
+        2 | 3 => versions.join(" · "),
+        _ => format!("{} 個指令", items.len()),
+    }
+}
+
 /// 「系統附帶」的標籤：macOS 說 macOS 內建，其他平台說系統內建
 pub fn builtin_label() -> &'static str {
     if cfg!(target_os = "macos") {
@@ -169,8 +190,8 @@ fn specs() -> Vec<(&'static str, &'static str, &'static str, ScanFn, bool)> {
         ("swift", "Swift", "Swift 工具鏈與 SDK", swift::scan, false),
         ("deno", "Deno", "執行環境", deno::scan, false),
         ("bun", "Bun", "執行環境與全域套件", bun::scan, false),
-        ("cli", "全域指令", "PATH 上、不屬於其他分類的指令", cli::scan, false),
-        ("system", "系統工具", "命令列工具版本", system::scan, false),
+        ("cli", "全域指令", "第三方指令", cli::scan, false),
+        ("system", "系統工具", "macOS 內建的命令列工具", system::scan, false),
     ]
 }
 
@@ -286,15 +307,6 @@ fn mark_agent_cli(item: &mut crate::models::Item) {
     if item.update_command.is_some() {
         return;
     }
-    // uv 安裝的指令工具
-    let from_uv = item
-        .location
-        .as_deref()
-        .map(|path| path.contains(".local/bin"))
-        .unwrap_or(false);
-    if from_uv {
-        item.update_command = Some(format!("uv tool upgrade {}", item.name));
-    }
 }
 
 pub fn collect() -> Inventory {
@@ -365,6 +377,65 @@ pub fn collect() -> Inventory {
         ecosystems.push(eco);
     }
 
+    // 「全域指令」再依程式分組：R、VirtualBox、uv…各自成為一個分類，
+    // 剩下的才留在「全域指令」。這樣每個分類都對應一個實際的安裝來源。
+    if let Some(position) = ecosystems.iter().position(|eco| eco.id == "cli") {
+        let items = std::mem::take(&mut ecosystems[position].items);
+        let mut buckets: Vec<(&'static groups::Rule, Vec<crate::models::Item>)> = Vec::new();
+        let mut residual: Vec<crate::models::Item> = Vec::new();
+
+        for mut item in items {
+            let target = item.location.clone().unwrap_or_default();
+            match groups::owner_of(&item.name, &target) {
+                Some(rule) => {
+                    // 搬家時 ecosystem/key/id 都要跟著改，否則前端分組對不上
+                    item.ecosystem = rule.id.to_string();
+                    item.key = format!("{}|{}|{}", item.ecosystem, item.source, item.name);
+                    item.id = format!("{}|{}", item.key, item.version);
+                    match buckets.iter_mut().find(|(known, _)| known.id == rule.id) {
+                        Some((_, bucket)) => bucket.push(item),
+                        None => buckets.push((rule, vec![item])),
+                    }
+                }
+                None => residual.push(item),
+            }
+        }
+
+        let duration = ecosystems[position].duration_ms;
+        ecosystems[position].items = residual;
+        // 「全域指令」是收納用的分類，沒有單一版本可代表 → 不顯示 headline，
+        // 收合時改為顯示分類說明（與「系統工具」一致）
+        ecosystems[position].headline = None;
+        if ecosystems[position].items.is_empty() {
+            ecosystems.remove(position);
+        }
+
+        // 具體程式排在「全域指令」前面，後者留作收尾（沒有被歸類的）
+        buckets.sort_by(|a, b| a.0.label.cmp(b.0.label));
+        let insert_at = ecosystems
+            .iter()
+            .position(|eco| eco.id == "cli")
+            .unwrap_or(position.min(ecosystems.len()));
+
+        for (offset, (rule, bucket)) in buckets.into_iter().enumerate() {
+            ecosystems.insert(
+                (insert_at + offset).min(ecosystems.len()),
+                Ecosystem {
+                    id: rule.id.to_string(),
+                    label: rule.label.to_string(),
+                    blurb: rule.blurb.to_string(),
+                    headline: Some(group_headline(&bucket)),
+                    items: bucket,
+                    available: true,
+                    checkable: false,
+                    error: None,
+                    warnings: Vec::new(),
+                    duration_ms: duration,
+                },
+            );
+        }
+    }
+
     let (host, os, arch, model) = machine();
     let _ = started;
 
@@ -393,6 +464,28 @@ mod tests {
             Some("8.4.11")
         );
         assert_eq!(pick_version("no version here").as_deref(), None);
+    }
+
+    #[test]
+    fn group_headline_prefers_the_version() {
+        let items = vec![
+            crate::models::Item::new("x", "s", "a", "7.2.2"),
+            crate::models::Item::new("x", "s", "b", "7.2.2"),
+            crate::models::Item::new("x", "s", "c", "—"),
+        ];
+        assert_eq!(super::group_headline(&items), "7.2.2");
+
+        let mixed = vec![
+            crate::models::Item::new("x", "s", "a", "4.5.1"),
+            crate::models::Item::new("x", "s", "b", "4.5.2"),
+        ];
+        assert_eq!(super::group_headline(&mixed), "4.5.1 · 4.5.2");
+
+        let unknown = vec![
+            crate::models::Item::new("x", "s", "a", "—"),
+            crate::models::Item::new("x", "s", "b", "未知"),
+        ];
+        assert_eq!(super::group_headline(&unknown), "2 個指令");
     }
 
     #[test]

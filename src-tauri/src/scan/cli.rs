@@ -15,11 +15,8 @@ use crate::sh;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
-/// 已經在「系統工具」分類策展列出的名稱（不重複列）
-const CURATED: &[&str] = &[
-    "clang", "cmake", "curl", "ffmpeg", "ffprobe", "git", "gpg", "jq", "make", "openssl",
-    "sqlite3", "tesseract", "vim", "zsh",
-];
+/// 已由 Homebrew 分類列出的指令（brew 本體）
+const OWNED_ELSEWHERE: &[&str] = &["brew"];
 
 /// 只探測前 N 個（超過就記一則警告）
 const MAX_ITEMS: usize = 300;
@@ -88,7 +85,7 @@ fn collect_from(dirs: &[PathBuf], warnings: &mut Vec<String>) -> Vec<Candidate> 
             if name.starts_with('.') || seen.iter().any(|seen_name| *seen_name == name) {
                 continue;
             }
-            if CURATED.contains(&name.as_str()) {
+            if OWNED_ELSEWHERE.contains(&name.as_str()) {
                 continue;
             }
 
@@ -233,6 +230,15 @@ pub fn scan() -> Result<Part, String> {
             .kind("cli")
             .at(candidate.path.display().to_string())
             .about("PATH 上的可執行指令");
+        // 更新指令只有在確定來源時才給，避免亂猜
+        if candidate.name == "uv" || candidate.name == "uvx" {
+            item = item.cmd("uv self update");
+        } else if candidate
+            .target
+            .contains("/.local/share/uv/tools/")
+        {
+            item = item.cmd(format!("uv tool upgrade {}", candidate.name));
+        }
         if GUI_LAUNCHERS.contains(&candidate.name.as_str()) {
             item = item.note("圖形介面程式；執行 --version 會開啟視窗，因此不探測版本");
         } else if candidate.dir.to_string_lossy().contains(".local/bin") {
@@ -257,7 +263,7 @@ pub fn scan() -> Result<Part, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{collect_from, is_managed, CURATED};
+    use super::{collect_from, is_managed, OWNED_ELSEWHERE};
     use std::path::PathBuf;
 
     #[test]
@@ -274,10 +280,9 @@ mod tests {
     }
 
     #[test]
-    fn curated_names_are_not_listed() {
-        assert!(CURATED.contains(&"git"));
-        assert!(CURATED.contains(&"ffmpeg"));
-        assert!(!CURATED.contains(&"VirtualBox"));
+    fn brew_is_owned_by_the_homebrew_category() {
+        assert!(OWNED_ELSEWHERE.contains(&"brew"));
+        assert!(!OWNED_ELSEWHERE.contains(&"VirtualBox"));
     }
 
     #[cfg(unix)]
@@ -294,10 +299,10 @@ mod tests {
         std::fs::write(&tool, "#!/bin/sh\necho 1.2.3\n").unwrap();
         std::fs::set_permissions(&tool, std::fs::Permissions::from_mode(0o755)).unwrap();
 
-        // 策展名單內：跳過
-        let git = base.join("git");
-        std::fs::write(&git, "#!/bin/sh\n").unwrap();
-        std::fs::set_permissions(&git, std::fs::Permissions::from_mode(0o755)).unwrap();
+        // 已由其他分類列出：跳過
+        let brew = base.join("brew");
+        std::fs::write(&brew, "#!/bin/sh\n").unwrap();
+        std::fs::set_permissions(&brew, std::fs::Permissions::from_mode(0o755)).unwrap();
 
         // 不可執行：跳過
         std::fs::write(base.join("notes.txt"), "hello").unwrap();

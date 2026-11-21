@@ -24,7 +24,6 @@ const zhTW: Dict = {
   "shortcut.nextScope": "下一個分類（{mod}]）",
   "shortcut.allScope": "全部（{mod}0）",
 
-  "footer.readonly": "只讀模式，不會改動任何系統狀態",
   "footer.checking": "正在向各上游查詢版本…",
   "footer.checkAt": "版本檢查 {time}",
   "footer.scanAt": "掃描 {time}",
@@ -63,9 +62,9 @@ const zhTW: Dict = {
   "eco.ruby": "Ruby",
   "eco.ruby.blurb": "直譯器與 gem",
     "eco.cli": "全域指令",
-  "eco.cli.blurb": "PATH 上、不屬於其他分類的指令",
+  "eco.cli.blurb": "第三方指令",
 "eco.system": "系統工具",
-  "eco.system.blurb": "命令列工具版本",
+  "eco.system.blurb": "macOS 內建的命令列工具",
 
   "search.placeholder": "搜尋名稱、版本、來源",
   "search.clear": "清除搜尋",
@@ -96,7 +95,6 @@ const zhTW: Dict = {
   "status.outdatedPlain": "可更新",
   "status.current": "已是最新",
   "status.error": "讀取失敗",
-  "status.unknown": "還沒比對上游版本（按「檢查更新」）",
   "status.notCheckable": "不檢查這個分類的版本",
 
   "empty.scanning.title": "正在讀取這台機器的環境…",
@@ -116,7 +114,6 @@ const zhTW: Dict = {
   "insp.copy": "複製",
   "insp.copied": "已複製",
   "insp.manual": "請手動複製",
-  "insp.footnote": "只讀工具：上面的指令不會被自動執行。移除指令貼進終端機後會真的刪掉這個套件，動手前先確認。",
 
   "kind.runtime": "執行環境",
   "kind.toolchain": "工具鏈",
@@ -158,6 +155,12 @@ const zhTW: Dict = {
   "warn.title": "讀取警告",
   "warn.empty": "目前沒有警告",
   "warn.aria": "警告（{n} 則）",
+  "eco.r": "R",
+  "eco.r.blurb": "R 統計環境與附帶指令",
+  "eco.virtualbox": "VirtualBox",
+  "eco.virtualbox.blurb": "Oracle 虛擬機指令",
+  "eco.uv": "uv",
+  "eco.uv.blurb": "Python 套件與工具管理器",
 };
 
 const zhCN: Dict = {
@@ -176,7 +179,6 @@ const zhCN: Dict = {
   "shortcut.nextScope": "下一个分类（{mod}]）",
   "shortcut.allScope": "全部（{mod}0）",
 
-  "footer.readonly": "只读模式，不会改动任何系统状态",
   "footer.checking": "正在向各上游查询版本…",
   "footer.checkAt": "版本检查 {time}",
   "footer.scanAt": "扫描 {time}",
@@ -215,9 +217,9 @@ const zhCN: Dict = {
   "eco.ruby": "Ruby",
   "eco.ruby.blurb": "解释器与 gem",
     "eco.cli": "全局指令",
-  "eco.cli.blurb": "PATH 上、不属于其他分类的指令",
+  "eco.cli.blurb": "第三方指令",
 "eco.system": "系统工具",
-  "eco.system.blurb": "命令行工具版本",
+  "eco.system.blurb": "macOS 内置的命令行工具",
 
   "search.placeholder": "搜索名称、版本、来源",
   "search.clear": "清除搜索",
@@ -248,7 +250,6 @@ const zhCN: Dict = {
   "status.outdatedPlain": "可更新",
   "status.current": "已是最新",
   "status.error": "读取失败",
-  "status.unknown": "还没比对上游版本（按「检查更新」）",
   "status.notCheckable": "不检查这个分类的版本",
 
   "empty.scanning.title": "正在读取这台机器的环境…",
@@ -268,7 +269,6 @@ const zhCN: Dict = {
   "insp.copy": "复制",
   "insp.copied": "已复制",
   "insp.manual": "请手动复制",
-  "insp.footnote": "只读工具：上面的指令不会被自动执行。移除指令贴进终端后真的会删除这个包，动手前请先确认。",
 
   "kind.runtime": "运行环境",
   "kind.toolchain": "工具链",
@@ -310,6 +310,12 @@ const zhCN: Dict = {
   "warn.title": "读取警告",
   "warn.empty": "当前没有警告",
   "warn.aria": "警告（{n} 条）",
+  "eco.r": "R",
+  "eco.r.blurb": "R 统计环境与附带指令",
+  "eco.virtualbox": "VirtualBox",
+  "eco.virtualbox.blurb": "Oracle 虚拟机指令",
+  "eco.uv": "uv",
+  "eco.uv.blurb": "Python 包与工具管理器",
 };
 
 const en: Dict = {
@@ -328,7 +334,6 @@ const en: Dict = {
   "shortcut.nextScope": "Next category ({mod}])",
   "shortcut.allScope": "All ({mod}0)",
 
-  "footer.readonly": "Read-only: nothing on this system is modified",
   "footer.checking": "Asking upstream sources for versions…",
   "footer.checkAt": "Checked {time}",
   "footer.scanAt": "Scanned {time}",
@@ -366,10 +371,10 @@ const en: Dict = {
   "eco.php.blurb": "interpreter",
   "eco.ruby": "Ruby",
   "eco.ruby.blurb": "interpreter and gems",
-    "eco.cli": "CLI tools",
-  "eco.cli.blurb": "commands on PATH not covered elsewhere",
-"eco.system": "System tools",
-  "eco.system.blurb": "command-line tool versions",
+    "eco.cli": "Other commands",
+  "eco.cli.blurb": "third-party commands",
+"eco.system": "macOS built-in",
+  "eco.system.blurb": "command-line tools built into macOS",
 
   "search.placeholder": "Search name, version, source",
   "search.clear": "Clear search",
@@ -400,7 +405,6 @@ const en: Dict = {
   "status.outdatedPlain": "Update available",
   "status.current": "Up to date",
   "status.error": "Read failed",
-  "status.unknown": "Not compared with upstream yet (press “Check updates”)",
   "status.notCheckable": "No upstream comparison for this category",
 
   "empty.scanning.title": "Reading this machine's environment…",
@@ -420,7 +424,6 @@ const en: Dict = {
   "insp.copy": "Copy",
   "insp.copied": "Copied",
   "insp.manual": "Copy manually",
-  "insp.footnote": "Read-only: these commands are never executed for you. The remove command really does delete the package once you paste it into a terminal.",
 
   "kind.runtime": "Runtime",
   "kind.toolchain": "Toolchain",
@@ -462,6 +465,12 @@ const en: Dict = {
   "warn.title": "Warnings",
   "warn.empty": "No warnings",
   "warn.aria": "{n} warnings",
+  "eco.r": "R",
+  "eco.r.blurb": "R statistics environment and bundled commands",
+  "eco.virtualbox": "VirtualBox",
+  "eco.virtualbox.blurb": "Oracle VirtualBox commands",
+  "eco.uv": "uv",
+  "eco.uv.blurb": "Python package and tool manager",
 };
 
 export const DICTS: Record<Lang, Dict> = {

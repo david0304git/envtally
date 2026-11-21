@@ -1097,14 +1097,6 @@ button {
   word-break: break-all;
 }
 
-.foot-note {
-  margin: auto 0 0;
-  padding: 11px 16px;
-  border-top: 1px solid var(--hair);
-  font-size: 10.5px;
-  line-height: 1.6;
-  color: var(--faint);
-}
 
 /* ── 底部狀態列 ─────────────────────────────────────────── */
 
@@ -1188,6 +1180,35 @@ button {
     width: 100%;
     opacity: 0.4;
   }
+}
+
+/* ── 滾動條：細、低對比，捲動區才需要 ─────────────────────── */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--rule);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--faint);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* ── 設定彈出面板 ─────────────────────────────────────────── */
