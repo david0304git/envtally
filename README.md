@@ -257,6 +257,7 @@ gh run download --repo david0304git/envbench     # 最新一次，兩個平台�
 | 套件管理器 | Homebrew（`brew info`） | Chocolatey（`choco list --limit-output`） |
 | shim 處理 | — | 讀 `*.shim` 的 `path =` 還原真實執行檔；Chocolatey 管理的項目歸 Chocolatey 分類，`RefreshEnv` 等輔助腳本不列 |
 | 版本探測 | 單一 700ms／總 1.2s | 單一 1200ms／總 2.5s（shim 啟動較慢） |
+| 指令解析 | 直接找執行檔 | 先試 `.exe`／`.cmd`（`npm` 在 Windows 是 bash 腳本，直接執行會是 os error 193）；`.cmd`／`.bat` 以 `cmd.exe /C` 包一層執行 |
 | 逾時終止 | `kill -9` | `taskkill /F /T /PID` |
 | 展匯出時間戳 | `date` | PowerShell `Get-Date` |
 | 標題列 | 自訂（`titleBarStyle: Overlay`） | 系統原生標題列（我們的自訂列在它下面） |

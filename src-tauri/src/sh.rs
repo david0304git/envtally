@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::sync::OnceLock;
@@ -166,23 +166,46 @@ pub fn path_string() -> &'static str {
     })
 }
 
+/// Windows 上要依序嘗試的檔名：`.exe`／`.cmd` 先，沒有副檔名的版本最後。
+///
+/// npm 在 Windows 同時有 `npm`（bash 腳本）與 `npm.cmd`；先抓到前者會噴 os error 193
+/// （不是有效的 Win32 應用程式）。
+fn candidate_names(program: &str) -> Vec<String> {
+    if !cfg!(windows) {
+        return vec![program.to_string()];
+    }
+    let mut out: Vec<String> = Vec::new();
+    if !program.contains('.') {
+        for extension in ["exe", "cmd", "bat", "com"] {
+            out.push(format!("{program}.{extension}"));
+        }
+    }
+    out.push(program.to_string());
+    out
+}
+
+/// 批次檔（.cmd / .bat）必須透過 `cmd.exe /C` 執行，直接 spawn 會是 os error 193
+fn is_batch_file(path: &Path) -> bool {
+    cfg!(windows)
+        && path
+            .extension()
+            .map(|extension| {
+                let extension = extension.to_string_lossy().to_lowercase();
+                extension == "cmd" || extension == "bat"
+            })
+            .unwrap_or(false)
+}
+
 pub fn which(program: &str) -> Option<PathBuf> {
     if program.contains('/') || (cfg!(windows) && program.contains('\\')) {
         let p = PathBuf::from(program);
         return if p.is_file() { Some(p) } else { None };
     }
     for dir in search_dirs() {
-        let cand = dir.join(program);
-        if cand.is_file() {
-            return Some(cand);
-        }
-        if cfg!(windows) {
-            // Windows 的可執行檔常帶副檔名（npm 是 npm.cmd）
-            for ext in ["exe", "cmd", "bat"] {
-                let with_ext = dir.join(format!("{program}.{ext}"));
-                if with_ext.is_file() {
-                    return Some(with_ext);
-                }
+        for name in candidate_names(program) {
+            let candidate = dir.join(&name);
+            if candidate.is_file() {
+                return Some(candidate);
             }
         }
     }
@@ -209,7 +232,13 @@ fn hide_console(_command: &mut Command) {}
 pub fn run(program: &str, args: &[&str], timeout: Duration) -> Result<CmdResult, String> {
     let exe = which(program).ok_or_else(|| format!("找不到指令 {program}"))?;
 
-    let mut command = Command::new(&exe);
+    let mut command = if is_batch_file(&exe) {
+        let mut command = Command::new("cmd.exe");
+        command.arg("/C").arg(&exe);
+        command
+    } else {
+        Command::new(&exe)
+    };
     command
         .args(args)
         .env("PATH", path_string())
@@ -254,5 +283,36 @@ pub fn run(program: &str, args: &[&str], timeout: Duration) -> Result<CmdResult,
             }
             Err(format!("{program} 逾時（{} 秒）", timeout.as_secs()))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{candidate_names, is_batch_file};
+    use std::path::Path;
+
+    #[test]
+    fn candidate_names_prefers_executables_on_windows() {
+        let names = candidate_names("npm");
+        if cfg!(windows) {
+            assert_eq!(names.first().map(String::as_str), Some("npm.exe"));
+            assert!(names.iter().any(|name| name == "npm.cmd"));
+            assert_eq!(names.last().map(String::as_str), Some("npm"));
+        } else {
+            assert_eq!(names, vec![String::from("npm")]);
+        }
+    }
+
+    #[test]
+    fn candidate_names_keeps_explicit_extensions() {
+        let names = candidate_names("choco.exe");
+        assert_eq!(names, vec![String::from("choco.exe")]);
+    }
+
+    #[test]
+    fn batch_files_need_cmd_wrapper() {
+        assert_eq!(is_batch_file(Path::new("C:\\x\\npm.cmd")), cfg!(windows));
+        assert!(!is_batch_file(Path::new("C:\\x\\choco.exe")));
+        assert!(!is_batch_file(Path::new("/usr/bin/git")));
     }
 }
