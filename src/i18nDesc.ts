@@ -63,6 +63,16 @@ const BY_NAME: Record<string, Triple> = {
     "Ruby 解释器：系统工具（如 CocoaPods）会用到",
     "Ruby interpreter, used by tools such as CocoaPods",
   ],
+  "choco|toolchain": [
+    "Chocolatey 套件管理器本體：install / upgrade / list",
+    "Chocolatey 包管理器本体：install / upgrade / list",
+    "The Chocolatey package manager itself",
+  ],
+  "choco|package": [
+    "由 Chocolatey 安裝的套件",
+    "由 Chocolatey 安装的包",
+    "A package installed with Chocolatey",
+  ],
   "cli|cli": [
     "PATH 上的可執行指令（不屬於其他分類管理）",
     "PATH 上的可执行指令（不属于其他分类管理）",

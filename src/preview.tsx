@@ -140,6 +140,16 @@ async function bootstrap() {
     }, 500);
   }
 
+  // ?clearwarn=1 打開面板後按「清除」
+  if (params.get("clearwarn") === "1") {
+    setTimeout(() => {
+      document.querySelector<HTMLButtonElement>('[data-action="warnings"]')?.click();
+      setTimeout(() => {
+        document.querySelector<HTMLButtonElement>('[data-action="clear-warnings"]')?.click();
+      }, 300);
+    }, 400);
+  }
+
   // ?warnings=1 直接打開右上角的警告面板
   if (params.get("warnings") === "1") {
     setTimeout(() => {

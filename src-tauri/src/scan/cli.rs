@@ -15,13 +15,63 @@ use crate::sh;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
-/// 已由 Homebrew 分類列出的指令（brew 本體）
-const OWNED_ELSEWHERE: &[&str] = &["brew"];
+/// 已由其他分類列出的指令（brew 本體由 Homebrew 分類、choco 由 Chocolatey 分類）
+const OWNED_ELSEWHERE: &[&str] = &["brew", "choco", "chocolatey"];
+
+/// 套件管理器的輔助腳本，不是使用者會直接用的指令
+const HELPER_SCRIPTS: &[&str] = &["refreshenv", "shimgen", "chocolateyinstall"];
+
+/// Windows 的執行檔副檔名，顯示時去掉
+fn display_name(name: &str) -> String {
+    let lower = name.to_lowercase();
+    for suffix in [".exe", ".cmd", ".bat", ".com"] {
+        if lower.ends_with(suffix) {
+            return name[..name.len() - suffix.len()].to_string();
+        }
+    }
+    name.to_string()
+}
+
+/// 讀 Chocolatey 的 shim 檔（`<執行檔>.shim`），取出真正的目標路徑
+fn parse_shim_path(text: &str) -> Option<String> {
+    for line in text.lines() {
+        let trimmed = line.trim();
+        let lower = trimmed.to_lowercase();
+        if let Some(rest) = lower.strip_prefix("path") {
+            if rest.trim_start().starts_with('=') {
+                let value = trimmed
+                    .split_once('=')
+                    .map(|(_, value)| value.trim())
+                    .unwrap_or("");
+                if !value.is_empty() {
+                    return Some(value.to_string());
+                }
+            }
+        }
+    }
+    None
+}
+
+/// 解析過 shim 的實際目標（非 Windows 或沒有 shim 檔就回傳原路徑）
+fn resolve_target(path: &Path, canonical: &Path) -> String {
+    if cfg!(windows) {
+        let shim = PathBuf::from(format!("{}.shim", path.display()));
+        if let Ok(text) = std::fs::read_to_string(&shim) {
+            if let Some(target) = parse_shim_path(&text) {
+                return target;
+            }
+        }
+    }
+    canonical.display().to_string()
+}
 
 /// 只探測前 N 個（超過就記一則警告）
 const MAX_ITEMS: usize = 300;
 /// 版本探測的總時間上限（避免少數會卡住的指令拖慢掃描）
 const PROBE_DEADLINE_MS: u64 = 1200;
+/// Windows 的 shim（Chocolatey／Scoop）啟動較慢，放寬單一指令上限
+const PROBE_TIMEOUT_MS: u64 = if cfg!(windows) { 1200 } else { 700 };
+const PROBE_DEADLINE_WINDOWS_MS: u64 = 2500;
 /// 這類指令跑 `--version` 會啟動圖形介面（實測 VirtualBox 會卡 89 秒），不探測
 const GUI_LAUNCHERS: &[&str] = &["VirtualBox", "VirtualBoxVM"];
 const PROBE_THREADS: usize = 8;
@@ -38,6 +88,7 @@ struct Candidate {
 fn is_managed(target: &str) -> bool {
     let path = target.replace('\\', "/");
     path.contains("/Cellar/")
+        || path.contains("/chocolatey/")
         || path.ends_with("/.cargo/bin/rustup")
         || path.contains("/Python.framework/")
         || path.contains("node_modules")
@@ -81,27 +132,33 @@ fn collect_from(dirs: &[PathBuf], warnings: &mut Vec<String>) -> Vec<Candidate> 
             .collect();
         names.sort();
 
-        for name in names {
-            if name.starts_with('.') || seen.iter().any(|seen_name| *seen_name == name) {
-                continue;
-            }
-            if OWNED_ELSEWHERE.contains(&name.as_str()) {
+        for raw_name in names {
+            if raw_name.starts_with('.') {
                 continue;
             }
 
-            let path = dir.join(&name);
+            let path = dir.join(&raw_name);
             let resolved = std::fs::canonicalize(&path).unwrap_or_else(|_| path.clone());
             if !is_executable(&resolved) && !is_executable(&path) {
                 continue;
             }
 
-            let target = resolved.display().to_string();
+            let name = display_name(&raw_name);
+            let lower = name.to_lowercase();
+            if HELPER_SCRIPTS.contains(&lower.as_str())
+                || OWNED_ELSEWHERE.contains(&lower.as_str())
+                || seen.iter().any(|seen_name| *seen_name == lower)
+            {
+                continue;
+            }
+
+            let target = resolve_target(&path, &resolved);
             if is_managed(&target) {
                 skipped_managed += 1;
                 continue;
             }
 
-            seen.push(name.clone());
+            seen.push(lower);
             out.push(Candidate {
                 name,
                 path: path.clone(),
@@ -163,7 +220,7 @@ fn probe_version(name: &str, path: &Path) -> Option<String> {
         return None;
     }
     let program = path.to_string_lossy().to_string();
-    let out = sh::run(&program, &["--version"], Duration::from_millis(700)).ok()?;
+    let out = sh::run(&program, &["--version"], Duration::from_millis(PROBE_TIMEOUT_MS)).ok()?;
     let combined = format!("{}\n{}", out.stdout, out.stderr);
     pick_version(&combined)
 }
@@ -179,7 +236,12 @@ pub fn scan() -> Result<Part, String> {
     candidates.sort_by(|a, b| a.name.cmp(&b.name));
 
     // 版本探測：分給幾個執行緒，超過期限就停止（剩下的顯示「—」）
-    let deadline = Instant::now() + Duration::from_millis(PROBE_DEADLINE_MS);
+    let budget = if cfg!(windows) {
+        PROBE_DEADLINE_WINDOWS_MS
+    } else {
+        PROBE_DEADLINE_MS
+    };
+    let deadline = Instant::now() + Duration::from_millis(budget);
     let threads = PROBE_THREADS.min(candidates.len());
     let chunk_size = candidates.len().div_ceil(threads);
     let mut versions: Vec<Option<String>> = vec![None; candidates.len()];
@@ -247,17 +309,13 @@ pub fn scan() -> Result<Part, String> {
         part.items.push(item);
     }
 
-    let total = part.items.len();
-    if probed < total {
-        warnings.push(format!(
-            "有 {} 個指令在時間內沒有回報版本（顯示「—」）",
-            total - probed
-        ));
-    }
+    // 注意：這個分類的項目之後會被拆到 R／VirtualBox／uv 等群組，
+    // 所以不在這裡統計「幾個沒回報版本」（會失準）；GUI 啟動器的備註已說明原因。
+    let _ = probed;
     for warning in warnings {
         part.warn(warning);
     }
-    part.headline = Some(format!("{total} 個指令"));
+    part.headline = Some(format!("{} 個指令", part.items.len()));
     Ok(part)
 }
 
@@ -277,6 +335,24 @@ mod tests {
         assert!(!is_managed("/usr/local/bin/R"));
         assert!(!is_managed("/opt/homebrew/bin/brew"));
         assert!(!is_managed("/Users/x/.local/bin/uv"));
+    }
+
+    #[test]
+    fn windows_display_name_drops_the_suffix() {
+        assert_eq!(super::display_name("choco.exe"), "choco");
+        assert_eq!(super::display_name("claude.cmd"), "claude");
+        assert_eq!(super::display_name("RefreshEnv.cmd"), "RefreshEnv");
+        assert_eq!(super::display_name("uv"), "uv");
+    }
+
+    #[test]
+    fn reads_chocolatey_shim_target() {
+        let shim = "path = C:\\ProgramData\\chocolatey\\choco.exe\nargs = \n";
+        assert_eq!(
+            super::parse_shim_path(shim).as_deref(),
+            Some("C:\\ProgramData\\chocolatey\\choco.exe")
+        );
+        assert_eq!(super::parse_shim_path("args = --foo\n"), None);
     }
 
     #[test]

@@ -99,6 +99,8 @@ function Workspace() {
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [warnOpen, setWarnOpen] = useState(false);
+  // 使用者按「清除」後就不再顯示那些警告；重新掃描／檢查會清空這個集合
+  const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
   const warnRef = useRef<HTMLDivElement | null>(null);
   const [exporting, setExporting] = useState(false);
   const [toast, setToast] = useState<
@@ -114,6 +116,7 @@ function Workspace() {
     try {
       const next = await scanLocal();
       setInventory(next);
+      setDismissedWarnings(new Set());
       if (!collapsedInitialized.current) {
         collapsedInitialized.current = true;
         setCollapsedGroups(
@@ -140,6 +143,7 @@ function Workspace() {
     setCheckError(null);
     try {
       setUpdates(await checkUpdates());
+      setDismissedWarnings(new Set());
     } catch (error) {
       setCheckError(error instanceof Error ? error.message : String(error));
     } finally {
@@ -393,6 +397,11 @@ function Workspace() {
     return list;
   }, [ecosystems, updates, scanError, checkError, t]);
 
+  const visibleWarnings = useMemo(
+    () => warnings.filter((warning) => !dismissedWarnings.has(warning)),
+    [warnings, dismissedWarnings],
+  );
+
   const scopeTotal = scope === ALL_SCOPE ? allRows.length : (counts.get(scope)?.total ?? 0);
 
   return (
@@ -436,12 +445,12 @@ function Workspace() {
           <div className="settings-wrap" ref={warnRef}>
             <button
               type="button"
-              className={`btn btn--icon bell${warnings.length > 0 ? " has-warnings" : ""}`}
+              className={`btn btn--icon bell${visibleWarnings.length > 0 ? " has-warnings" : ""}`}
               data-action="warnings"
               onClick={() => setWarnOpen((open) => !open)}
-              aria-label={t("warn.aria", { n: warnings.length })}
+              aria-label={t("warn.aria", { n: visibleWarnings.length })}
               aria-expanded={warnOpen}
-              title={t("warn.aria", { n: warnings.length })}
+              title={t("warn.aria", { n: visibleWarnings.length })}
             >
               <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true" fill="none">
                 <path
@@ -457,19 +466,35 @@ function Workspace() {
                   strokeLinecap="round"
                 />
               </svg>
-              {warnings.length > 0 && <span className="bell-badge">{warnings.length}</span>}
+              {visibleWarnings.length > 0 && (
+                <span className="bell-badge">{visibleWarnings.length}</span>
+              )}
             </button>
             {warnOpen && (
               <div className="settings warn-pop" role="dialog" aria-label={t("warn.title")}>
-                <p className="settings-title">
-                  {t("warn.title")}
-                  {warnings.length > 0 && <span className="warn-count">{warnings.length}</span>}
-                </p>
-                {warnings.length === 0 ? (
+                <div className="warn-head">
+                  <p className="settings-title">
+                    {t("warn.title")}
+                    {visibleWarnings.length > 0 && (
+                      <span className="warn-count">{visibleWarnings.length}</span>
+                    )}
+                  </p>
+                  {visibleWarnings.length > 0 && (
+                    <button
+                      type="button"
+                      className="warn-clear"
+                      data-action="clear-warnings"
+                      onClick={() => setDismissedWarnings(new Set(warnings))}
+                    >
+                      {t("warn.clear")}
+                    </button>
+                  )}
+                </div>
+                {visibleWarnings.length === 0 ? (
                   <p className="warn-empty">{t("warn.empty")}</p>
                 ) : (
                   <ul className="warn-list">
-                    {warnings.map((warning, index) => (
+                    {visibleWarnings.map((warning, index) => (
                       <li key={`${index}-${warning}`}>{warning}</li>
                     ))}
                   </ul>

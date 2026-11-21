@@ -9,6 +9,7 @@
 | 生態系 | 抓什麼 | 怎麼抓 |
 |---|---|---|
 | Homebrew | formula、cask、Homebrew 本體 | `brew info --json=v2 --installed`（一次拿到說明＋已安裝版本），再用 `opt/<name>` 連結判斷**目前生效**的 keg；漏掉的 formula 用 `brew list` 對帳補回 |
+| Chocolatey（Windows） | `choco list --limit-output` → 每個套件一列，含 `choco` 本體 | 只在偵測到 `choco` 時出現 |
 | Python | 每個直譯器（最多 4 個，去重）+ 各自的 pip 套件 | 逐一跑 `<python> -c "import importlib.metadata…"` 直接讀本地 metadata（版本＋Summary，比 `pip list` 快） |
 | Node.js | nvm 下的所有 node 版本、npm、全域套件 | 讀 `~/.nvm/versions/node/*`，`npm ls -g --json` |
 | Rust | rustup 的每個 toolchain、`cargo install` 的執行檔 | 讀 `~/.rustup/toolchains/*`，`rustc --version` |
@@ -24,7 +25,7 @@
 | 全域指令 | 第三方、且不屬於任何套件管理器的指令 | 掃描 `~/.local/bin`、`~/.cargo/bin`、`/usr/local/bin`、Homebrew bin，排除 Cellar／rustup／node_modules／Python.framework |
 | 系統工具 | macOS 內建的命令列工具（只看 `/usr/bin`、`/bin`、`/usr/sbin`、`/sbin`） | 各自跑 `--version`；Homebrew 裝的版本屬於 Homebrew 分類，不會重複列 |
 
-十七個分類並行掃描（沒安裝的自動隱藏），實測 **632 項 / 約 1 秒**。
+十八個分類並行掃描（沒安裝的自動隱藏），實測 **631 項 / 約 1 秒**。
 
 ### 左側分類選單
 
@@ -101,7 +102,7 @@
 未安裝：Go · Deno · Bun        10 個生態系
 ```
 
-所以在只有 Python 的機器上，畫面就是乾淨的兩個分類（Python + 系統工具），不會出現一堆「找不到 X」。分類清單目前有 17 個（Homebrew / Python / Node.js / Rust / Java / .NET / PHP / Ruby / Go / Swift / Deno / Bun / R / VirtualBox / uv / 全域指令 / 系統工具）。
+所以在只有 Python 的機器上，畫面就是乾淨的兩個分類（Python + 系統工具），不會出現一堆「找不到 X」。分類清單目前有 18 個（Homebrew / Chocolatey / Python / Node.js / Rust / Java / .NET / PHP / Ruby / Go / Swift / Deno / Bun / R / VirtualBox / uv / 全域指令 / 系統工具）。
 
 ### 版本狀態
 
@@ -197,6 +198,8 @@ npm run dev          # 然後開 http://127.0.0.1:5173/preview.html
 
 介面全部三語；**上游套件說明**維持原文（多為英文），**讀取警告**也保留原始語言，因為內容常含指令的原始輸出。
 
+警告集中在右上角**鈴鐘**（齒輪左側）：有警告時顯示數字徽章，點擊展開面板；面板右上角的「清除」會清掉目前這批（重新掃描或檢查更新後重新出現）。
+
 ## 匯出重建清單
 
 右上角「匯出清單」（`⌘E`）會在 `~/Downloads/Envbench/export-<時間>/` 產生一包可直接使用的檔案：
@@ -251,6 +254,9 @@ gh run download --repo david0304git/envbench     # 最新一次，兩個平台�
 | Homebrew 分類 | 完整支援 | 不存在 → 整個分類隱藏 |
 | Java | `java_home -V` + PATH | PATH 的 `java -version` |
 | Node 版本 | `~/.nvm/versions/node/*` | `%APPDATA%\nvm\v*`（nvm-windows） |
+| 套件管理器 | Homebrew（`brew info`） | Chocolatey（`choco list --limit-output`） |
+| shim 處理 | — | 讀 `*.shim` 的 `path =` 還原真實執行檔；Chocolatey 管理的項目歸 Chocolatey 分類，`RefreshEnv` 等輔助腳本不列 |
+| 版本探測 | 單一 700ms／總 1.2s | 單一 1200ms／總 2.5s（shim 啟動較慢） |
 | 逾時終止 | `kill -9` | `taskkill /F /T /PID` |
 | 展匯出時間戳 | `date` | PowerShell `Get-Date` |
 | 標題列 | 自訂（`titleBarStyle: Overlay`） | 系統原生標題列（我們的自訂列在它下面） |

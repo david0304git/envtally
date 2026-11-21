@@ -1238,6 +1238,27 @@ button {
   text-align: center;
 }
 
+.warn-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.warn-clear {
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 1px 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.warn-clear:hover {
+  border-color: var(--faint);
+  color: var(--ink);
+}
+
 .warn-pop {
   width: 420px;
   max-height: 380px;

@@ -1,6 +1,7 @@
 pub mod agents;
 pub mod brew;
 pub mod bun;
+pub mod choco;
 pub mod cli;
 pub mod deno;
 pub mod go;
@@ -179,6 +180,7 @@ pub fn origin_for(path: &str) -> &'static str {
 fn specs() -> Vec<(&'static str, &'static str, &'static str, ScanFn, bool)> {
     vec![
         ("brew", "Homebrew", "formula 與 cask", brew::scan, true),
+        ("choco", "Chocolatey", "Windows 套件管理器", choco::scan, true),
         ("python", "Python", "pip 套件與直譯器", python::scan, true),
         ("node", "Node.js", "nvm 版本與全域 npm", node::scan, true),
         ("rust", "Rust", "rustup toolchain 與 cargo bin", rust::scan, true),
