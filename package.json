@@ -1,7 +1,7 @@
 {
   "name": "envbench",
   "private": true,
-  "version": "0.3.1",
+  "version": "0.3.2",
   "type": "module",
   "description": "本機環境與套件盤點台（Tauri 桌面應用）",
   "scripts": {
