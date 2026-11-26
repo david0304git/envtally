@@ -1,5 +1,7 @@
 # Envbench
 
+> **官網**：https://david0304git.github.io/envbench/ ・ **下載**：[Releases](https://github.com/david0304git/envbench/releases/latest)（macOS / Windows）
+
 本機環境與套件盤點台。一個 Tauri 桌面應用，把這台 Mac 上「裝了什麼、哪個版本、哪些落後了」集中在一張表裡。
 
 點一列，右側會顯示這個套件**在做什麼**、裝在哪，以及可以直接複製的**更新／移除指令**：
