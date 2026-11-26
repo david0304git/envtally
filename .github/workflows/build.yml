@@ -38,6 +38,9 @@ jobs:
         with:
           workspaces: src-tauri
 
+      - name: 檢查個資（主機名／機型／截圖）
+        run: ./scripts/check-private-data.sh
+
       - name: Install frontend dependencies
         run: npm ci
 

@@ -33,3 +33,6 @@ s-*.png
 icon-options.png
 icon-check.png
 iconlab.html
+
+# 個資檢查用的本機樣式（絕不提交）
+.private-patterns

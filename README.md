@@ -157,6 +157,22 @@
 
 **刻意不給移除指令**的項目（共 54 項）：直譯器／工具鏈本體（Python、npm、Homebrew 自己、.NET SDK、JDK）、Ruby default gem、macOS 內建或 Xcode 附的命令列工具。這些移掉會弄壞系統或整個環境，與其給一條危險的指令，不如不給。
 
+## 上傳前檢查（不要夾帶私人資料）
+
+```bash
+./scripts/check-private-data.sh            # 檢查已追蹤檔案
+./scripts/check-private-data.sh --history  # 另外掃描完整歷史
+```
+
+會檢查：
+
+- 主機名／機型樣式（`MacBook Air`、`Mac16,12` 這類）
+- 家目錄路徑（`/Users/<name>/Documents`）
+- App 圖示以外的圖片（截圖常夾帶主機名與套件清單）
+- 你自訂的字串：寫進 `.private-patterns`（**已在 `.gitignore`，不會被提交**）
+
+CI 也會跑這支腳本，夾帶個資的 commit 會直接失敗。
+
 ## 開發
 
 ```bash
