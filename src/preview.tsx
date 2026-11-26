@@ -79,11 +79,11 @@ async function bootstrap() {
   // ?theme=light|dark|auto / ?lang=zh-TW|zh-CN|en 直接寫進 localStorage（App 啟動時會讀）
   const themeParam = params.get("theme");
   if (themeParam === "light" || themeParam === "dark" || themeParam === "auto") {
-    localStorage.setItem("envbench.theme", themeParam);
+    localStorage.setItem("envtally.theme", themeParam);
   }
   const langParam = params.get("lang");
   if (langParam === "zh-TW" || langParam === "zh-CN" || langParam === "en") {
-    localStorage.setItem("envbench.lang", langParam);
+    localStorage.setItem("envtally.lang", langParam);
   }
 
   // ?checked=1 自動觸發一次版本檢查（用 title 裡的 ⌘U 找按鈕，不受語言影響）

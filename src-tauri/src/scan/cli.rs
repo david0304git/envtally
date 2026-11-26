@@ -366,7 +366,7 @@ mod tests {
     fn collects_executables_and_skips_the_rest() {
         use std::os::unix::fs::PermissionsExt;
 
-        let base = std::env::temp_dir().join(format!("envbench-cli-{}", std::process::id()));
+        let base = std::env::temp_dir().join(format!("envtally-cli-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&base);
         std::fs::create_dir_all(&base).unwrap();
 

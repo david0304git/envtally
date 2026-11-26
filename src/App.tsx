@@ -408,7 +408,7 @@ function Workspace() {
     <div className="app">
       <header className="chrome" data-tauri-drag-region>
         <span className="chrome-title" data-tauri-drag-region>
-          Envbench
+          Envtally
         </span>
         <span className="chrome-spacer" data-tauri-drag-region />
         <div className="chrome-actions">

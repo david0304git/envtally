@@ -1,6 +1,6 @@
-# Envbench
+# Envtally
 
-> **官網**：https://david0304git.github.io/envbench/ ・ **下載**：[Releases](https://github.com/david0304git/envbench/releases/latest)（macOS / Windows）
+> **官網**：https://david0304git.github.io/envtally/ ・ **下載**：[Releases](https://github.com/david0304git/envtally/releases/latest)（macOS / Windows）
 
 本機環境與套件盤點台。一個 Tauri 桌面應用，把這台 Mac 上「裝了什麼、哪個版本、哪些落後了」集中在一張表裡。
 
@@ -220,7 +220,7 @@ npm run dev          # 然後開 http://127.0.0.1:5173/preview.html
 
 ## 匯出重建清單
 
-右上角「匯出清單」（`⌘E`）會在 `~/Downloads/Envbench/export-<時間>/` 產生一包可直接使用的檔案：
+右上角「匯出清單」（`⌘E`）會在 `~/Downloads/Envtally/export-<時間>/` 產生一包可直接使用的檔案：
 
 | 檔案 | 內容 |
 |---|---|
@@ -252,15 +252,15 @@ npm run dev          # 然後開 http://127.0.0.1:5173/preview.html
 
 ```
 GitHub → Actions → build → 最新的 run → Artifacts
-  envbench-windows  → msi/Envbench_0.1.0_x64_en-US.msi
-                      nsis/Envbench_0.1.0_x64-setup.exe
-  envbench-macos    → dmg/Envbench_0.1.0_aarch64.dmg
+  envtally-windows  → msi/Envtally_0.4.0_x64_en-US.msi
+                      nsis/Envtally_0.4.0_x64-setup.exe
+  envtally-macos    → dmg/Envtally_0.4.0_aarch64.dmg
 ```
 
 或用 CLI 下載：
 
 ```bash
-gh run download --repo david0304git/envbench     # 最新一次，兩個平台都抓
+gh run download --repo david0304git/envtally     # 最新一次，兩個平台都抓
 ```
 
 ### 平台差異
@@ -302,9 +302,9 @@ gh run download --repo david0304git/envbench     # 最新一次，兩個平台�
 
 | 位置 | 大小 | 是什麼 | 手動刪除 |
 |---|---|---|---|
-| `src-tauri/target/release/bundle/macos/Envbench.app` | 4.4 MB | 打包好的 app | `rm -rf "…/Envbench.app"` |
-| `~/Library/Caches/io.lutszhong.envbench` | 8 KB | WKWebView 網路快取 | `rm -rf` |
-| `~/Library/WebKit/io.lutszhong.envbench` | 332 KB | WKWebView 資料目錄 | `rm -rf` |
+| `src-tauri/target/release/bundle/macos/Envtally.app` | 4.4 MB | 打包好的 app | `rm -rf "…/Envtally.app"` |
+| `~/Library/Caches/io.lutszhong.envtally` | 8 KB | WKWebView 網路快取 | `rm -rf` |
+| `~/Library/WebKit/io.lutszhong.envtally` | 332 KB | WKWebView 資料目錄 | `rm -rf` |
 | `src-tauri/target` | 3.2 GB | Rust 建置產物（debug + release） | `cargo clean` |
 | `.cargo-home` / `.npm-cache` | 173 / 165 MB | 開發時導向專案內的套件快取 | `rm -rf` |
 | `node_modules` | 87 MB | 前端相依 | `rm -rf` |

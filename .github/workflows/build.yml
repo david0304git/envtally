@@ -19,10 +19,10 @@ jobs:
         include:
           - name: macOS (arm64)
             os: macos-latest
-            artifact: envbench-macos
+            artifact: envtally-macos
           - name: Windows (x64)
             os: windows-latest
-            artifact: envbench-windows
+            artifact: envtally-windows
 
     steps:
       - uses: actions/checkout@v4

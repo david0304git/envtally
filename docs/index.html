@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Envbench — 電腦上裝了什麼，一次看清</title>
+    <title>Envtally — 電腦上裝了什麼，一次看清</title>
     <meta
       name="description"
-      content="Envbench 掃描 18 個分類的本機環境與套件：Homebrew、Python、Node.js、Rust、Java、.NET、Ruby、Go、Swift、CLI 工具到 Agent CLI。只讀、不改系統、1 秒完成。支援 macOS 與 Windows。"
+      content="Envtally 掃描 18 個分類的本機環境與套件：Homebrew、Python、Node.js、Rust、Java、.NET、Ruby、Go、Swift、CLI 工具到 Agent CLI。只讀、不改系統、1 秒完成。支援 macOS 與 Windows。"
     />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="styles.css" />
-    <meta property="og:title" content="Envbench — 電腦上裝了什麼，一次看清" />
+    <meta property="og:title" content="Envtally — 電腦上裝了什麼，一次看清" />
     <meta property="og:description" content="只讀的本機環境與套件盤點工具：18 個分類、線上版本比對、一鍵匯出重建清單。" />
     <meta property="og:type" content="website" />
   </head>
@@ -27,7 +27,7 @@
               <path d="M762 420 L512 540 L512 780 L762 660 Z" fill="#e6e9e0" />
             </g>
           </svg>
-          Envbench
+          Envtally
         </a>
         <nav class="nav">
           <a href="#features">功能</a>
@@ -44,7 +44,7 @@
               </g>
             </svg>
           </button>
-          <a class="btn btn--ghost" href="https://github.com/david0304git/envbench" target="_blank" rel="noopener">
+          <a class="btn btn--ghost" href="https://github.com/david0304git/envtally" target="_blank" rel="noopener">
             原始碼
           </a>
         </div>
@@ -56,37 +56,37 @@
         <div>
           <h1>電腦上裝了什麼，<br />一次看清。</h1>
           <p class="lead">
-            Envbench 掃描 18 個分類的本機環境與套件——從 Homebrew、Python、Node.js、Rust，到你早就忘記裝過的
+            Envtally 掃描 18 個分類的本機環境與套件——從 Homebrew、Python、Node.js、Rust，到你早就忘記裝過的
             CLI 與 Agent CLI。只讀、不改系統，掃完只要 1 秒。
           </p>
           <div class="hero__actions">
-            <a class="btn btn--primary" id="dl-mac" href="https://github.com/david0304git/envbench/releases/latest">
+            <a class="btn btn--primary" id="dl-mac" href="https://github.com/david0304git/envtally/releases/latest">
               下載 macOS
               <span class="kbd">.dmg</span>
             </a>
-            <a class="btn btn--primary" id="dl-win" href="https://github.com/david0304git/envbench/releases/latest">
+            <a class="btn btn--primary" id="dl-win" href="https://github.com/david0304git/envtally/releases/latest">
               下載 Windows
               <span class="kbd">.exe</span>
             </a>
-            <a class="btn" href="https://github.com/david0304git/envbench/releases" target="_blank" rel="noopener">
+            <a class="btn" href="https://github.com/david0304git/envtally/releases" target="_blank" rel="noopener">
               所有版本
             </a>
           </div>
           <p class="hero__meta">
-            <span class="mono" id="version-label">v0.3.3</span>
+            <span class="mono" id="version-label">v0.4.0</span>
             <span>macOS 11+（Apple Silicon）／ Windows 10+</span>
             <span>免費、原始碼公開、無帳號</span>
           </p>
         </div>
 
-        <div class="shot" role="img" aria-label="Envbench 介面示意（範例資料）">
+        <div class="shot" role="img" aria-label="Envtally 介面示意（範例資料）">
           <div class="shot__chrome">
             <span class="lights">
               <i class="light light--r"></i>
               <i class="light light--y"></i>
               <i class="light light--g"></i>
             </span>
-            <span class="shot__title">Envbench</span>
+            <span class="shot__title">Envtally</span>
             <span class="shot__actions">
               <span class="chip-btn">匯出清單</span>
               <span class="chip-btn chip-btn--ink">重新掃描</span>
@@ -243,7 +243,7 @@
           <div class="readonly">
             <div>
               <h2>只讀，不是口號</h2>
-              <p>Envbench 的工作是「告訴你現況」，不是「幫你改」。所有更新與移除指令都只是可複製的文字。</p>
+              <p>Envtally 的工作是「告訴你現況」，不是「幫你改」。所有更新與移除指令都只是可複製的文字。</p>
             </div>
             <ul class="checks">
               <li>不會安裝、升級或移除任何套件</li>
@@ -260,14 +260,14 @@
         <div class="wrap section-pad">
           <div class="section-head">
             <h2>安裝</h2>
-            <p id="install-version">目前版本 v0.3.3</p>
+            <p id="install-version">目前版本 v0.4.0</p>
           </div>
           <div class="install">
             <div class="card">
               <h3>macOS <span class="os">Apple Silicon · 11+</span></h3>
               <ol>
                 <li>下載 <code>.dmg</code> 並開啟</li>
-                <li>把 Envbench 拖進「應用程式」</li>
+                <li>把 Envtally 拖進「應用程式」</li>
                 <li>首次開啟：右鍵點 App →「打開」</li>
               </ol>
               <div class="note">
@@ -308,15 +308,15 @@
 
     <footer>
       <div class="wrap footer__inner">
-        <span>Envbench <span class="mono" id="footer-version">v0.3.3</span></span>
+        <span>Envtally <span class="mono" id="footer-version">v0.4.0</span></span>
         <span class="dot-sep">·</span>
         <span>Tauri + React</span>
         <span class="dot-sep">·</span>
         <span>未指定授權，原始碼公開</span>
         <span class="spacer"></span>
-        <a href="https://github.com/david0304git/envbench" target="_blank" rel="noopener">GitHub</a>
-        <a href="https://github.com/david0304git/envbench/releases" target="_blank" rel="noopener">Releases</a>
-        <a href="https://github.com/david0304git/envbench/issues" target="_blank" rel="noopener">Issues</a>
+        <a href="https://github.com/david0304git/envtally" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/david0304git/envtally/releases" target="_blank" rel="noopener">Releases</a>
+        <a href="https://github.com/david0304git/envtally/issues" target="_blank" rel="noopener">Issues</a>
       </div>
     </footer>
 

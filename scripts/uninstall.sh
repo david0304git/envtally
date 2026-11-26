@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Envbench — 移除工具
+# Envtally — 移除工具
 #
 #   bash scripts/uninstall.sh                        # 預覽：只列出會刪什麼（預設）
 #   bash scripts/uninstall.sh --yes                  # 真的移除 app 與它的系統快取（約 5 MB）
@@ -13,8 +13,8 @@
 set -uo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BUNDLE_ID="io.lutszhong.envbench"
-APP="$PROJECT_DIR/src-tauri/target/release/bundle/macos/Envbench.app"
+BUNDLE_ID="io.lutszhong.envtally"
+APP="$PROJECT_DIR/src-tauri/target/release/bundle/macos/Envtally.app"
 
 WITH_CACHES=0
 EVERYTHING=0
@@ -50,8 +50,8 @@ targets=(
   "$HOME/Library/Preferences/$BUNDLE_ID.plist"
   "$HOME/Library/Saved Application State/$BUNDLE_ID.savedState"
   # 開發模式（npm run app:dev）用產品名當目錄名，可能出現這兩種
-  "$HOME/Library/Caches/envbench"
-  "$HOME/Library/WebKit/envbench"
+  "$HOME/Library/Caches/envtally"
+  "$HOME/Library/WebKit/envtally"
 )
 
 if [ "$WITH_CACHES" -eq 1 ]; then
@@ -102,11 +102,11 @@ if [ "$existing" -eq 0 ]; then
   exit 0
 fi
 
-if pgrep -f "$APP/Contents/MacOS/envbench" >/dev/null 2>&1; then
+if pgrep -f "$APP/Contents/MacOS/envtally" >/dev/null 2>&1; then
   echo
   echo "注意：app 正在執行，會先結束它。"
   if [ "$CONFIRM" -eq 1 ]; then
-    pkill -f "$APP/Contents/MacOS/envbench" || true
+    pkill -f "$APP/Contents/MacOS/envtally" || true
     sleep 1
   fi
 fi

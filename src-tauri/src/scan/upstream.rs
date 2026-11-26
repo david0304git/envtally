@@ -18,7 +18,7 @@ pub fn get_json(url: &str) -> Result<serde_json::Value, String> {
             "-H",
             "Accept: application/json",
             "-H",
-            "User-Agent: envbench",
+            "User-Agent: envtally",
             url,
         ],
         Duration::from_secs(TIMEOUT_SECS + 10),

@@ -1,7 +1,7 @@
-/* Envbench 官網：主題切換 + 從 GitHub API 取得最新版本的下載連結 */
+/* Envtally 官網：主題切換 + 從 GitHub API 取得最新版本的下載連結 */
 
-const THEME_KEY = "envbench.site.theme";
-const REPO = "david0304git/envbench";
+const THEME_KEY = "envtally.site.theme";
+const REPO = "david0304git/envtally";
 
 /* ── 主題 ─────────────────────────────────────────────── */
 
