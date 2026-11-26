@@ -61,7 +61,7 @@ async function bootstrap() {
       if (command === "check_updates") return updates;
       if (command === "export_rebuild") {
         return {
-          folder: "/tmp/version-manager-preview/export",
+          folder: "/tmp/envtally-preview/export",
           files: ["Brewfile", "requirements-Python-3.13.6.txt", "REBUILD.md"],
           itemCount: 0,
         };
