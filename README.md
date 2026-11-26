@@ -166,7 +166,7 @@
 
 會檢查：
 
-- 主機名／機型樣式（`MacBook Air`、`Mac16,12` 這類）
+- 主機名／機型樣式（`MacBook Air`、`MacXX,Y` 這類機器型號與產品名）
 - 家目錄路徑（`/Users/<name>/Documents`）
 - App 圖示以外的圖片（截圖常夾帶主機名與套件清單）
 - 你自訂的字串：寫進 `.private-patterns`（**已在 `.gitignore`，不會被提交**）
